@@ -22,6 +22,8 @@
 5. 스토리보드에 없는 오류 상태는 공통 red 알림으로 처리하고, 401 은 로그인 화면으로 보낸다
 6. 비밀번호를 바꿀 때 현재 비밀번호를 받는다 (틀리면 401 `UNAUTHORIZED`). `profile.html` 에 입력칸 하나를 더한다
 7. 회의록 목록과 상세 응답에 올린 사람 id `author_id` 를 더한다 (화면의 수정 · 삭제 가능 여부 판정용)
+8. `GET /api/auth/me` 응답에 `team_id` · `team_name` 을 더한다 (매핑표의 화면이 팀 id 를 얻는 길). 구현 중 추가했으며 확인 대기
+9. API 문서는 Swagger UI(`/docs`)로 열고 Authorize 로 토큰을 넣어 화면에서 호출해 볼 수 있게 한다
 
 ## Capabilities
 

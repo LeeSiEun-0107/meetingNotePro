@@ -55,11 +55,15 @@
 
 ### Requirement: 내 정보 조회
 <!-- 근거: J-01 · profile.html -->
-시스템은 로그인한 사람의 id, 이름, 이메일, 소속 팀 안의 역할(owner 또는 member)을 돌려줘야 한다(SHALL). 이메일은 고칠 수 없다.
+시스템은 로그인한 사람의 id, 이름, 이메일, 소속 팀 안의 역할(owner 또는 member), 소속 팀 id `team_id` 와 팀 이름 `team_name` 을 돌려줘야 한다(SHALL). 소속 팀이 없으면 `role`, `team_id`, `team_name` 은 비어 있다. 이메일은 고칠 수 없다. 화면은 이 응답으로 팀 API 경로의 팀 id 와 헤더의 팀 이름을 얻고, 팀이 없으면 팀 설정 화면으로 보낸다.
 
 #### Scenario: 내 정보 보기
 - **WHEN** 유효한 토큰으로 `GET /api/auth/me` 를 부른다
-- **THEN** 200 과 `id`, `name`, `email`, `role` 을 돌려준다
+- **THEN** 200 과 `id`, `name`, `email`, `role`, `team_id`, `team_name` 을 돌려준다
+
+#### Scenario: 팀이 없는 사용자
+- **WHEN** 소속 팀이 없는 사용자가 `GET /api/auth/me` 를 부른다
+- **THEN** `role`, `team_id`, `team_name` 이 비어 있고 화면은 팀 설정 화면으로 보낸다
 
 ### Requirement: 내 이름과 비밀번호 수정
 <!-- 근거: J-02~J-06 · profile.html -->

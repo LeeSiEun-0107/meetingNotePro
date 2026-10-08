@@ -5,7 +5,8 @@
 - [ ] 1.1 `backend/` 에 FastAPI 앱, SQLAlchemy 모델 7개(users · teams · memberships · meetings · todos · comments · activities), `DATABASE_URL` 유무로 Neon/SQLite 를 고르는 연결을 만든다. `.env` 없이 서버를 띄워 `meetingnote.db` 가 생기는지 확인한다
 - [ ] 1.2 오류 응답을 `{code, msg}` 로 통일하고 문서의 오류 코드 15종(`EMAIL_INVALID` 등 10 + `FORBIDDEN` · `OWNER_ONLY` · `VALIDATION_ERROR` · `NOT_FOUND` · `UNAUTHORIZED`)만 쓴다. 코드별 상태가 맞는지 단위 테스트가 통과하는지 확인한다
 - [ ] 1.3 `frontend/` 를 StaticFiles 로 서빙하고 `/login.html` 같은 확장자 경로가 열리게 한다. `.env.example` 에 `GEMINI_API_KEY` · `GEMINI_MODEL` 두 줄만 둔다. 브라우저에서 `127.0.0.1:8000/login.html` 이 열리고 `.env` 가 git 추적에서 빠져 있는지 확인한다
-- [ ] 1.4 실행 방법(설치 · `.env` · uvicorn 실행)을 `docs/` 아닌 루트 `README.md` 에 적는다. 적은 명령 그대로 따라 서버가 뜨는지 확인한다
+- [ ] 1.4 Swagger UI(`/docs`)를 켜고 `Authorize` 버튼에 로그인 토큰(Bearer)을 넣으면 보호된 API 를 화면에서 바로 호출해 볼 수 있게 한다. `/docs` 가 StaticFiles 에 가려지지 않는지, 로그인 토큰으로 `GET /api/auth/me` 가 200 인지 확인한다
+- [ ] 1.5 실행 방법(설치 · `.env` · uvicorn 실행)을 `docs/` 아닌 루트 `README.md` 에 적는다. 적은 명령 그대로 따라 서버가 뜨는지 확인한다
 
 ## 2. 인증 (user-auth)
 
@@ -42,6 +43,7 @@
 
 - [ ] 7.1 `publish/theme.js` 를 `frontend/` 로 가져오되 내용은 바꾸지 않고, 모든 화면이 쓰는 `api()` 호출 래퍼(토큰 헤더 · `{code, msg}` 풀기 · 401 `TOKEN_EXPIRED` 때 토큰 삭제와 로그인 이동 · 그 밖의 오류는 red 알림)를 만든다. 만료 토큰으로 호출했을 때 로그인 화면으로 가는지 확인한다
 - [ ] 7.2 `publish/` 의 화면 HTML 6개를 `frontend/` 로 가져오고 클래스 문자열이 바뀌지 않았는지 `publish/` 와 대조해 확인한다. 상태 주석 번호는 스토리보드 번호로 고친다
+- [ ] 7.3 스토리보드 I-01 통합 매핑표대로 각 화면이 부르는 API 가 정확히 다음과 같은지 `fetch` 경로를 뽑아 대조한다: login 3 · meetings 5 · detail 7 · todos 4 · team 7 · profile 4. 합집합이 26개이고 쓰이지 않는 경로가 0개인지 확인한다
 
 ## 8. 화면 구현
 
@@ -62,3 +64,8 @@
 
 - [ ] 10.1 사용 시나리오 4종(리더 가입부터 배정까지 · 팀원 칸반 완료 · 신규 합류자 검색과 댓글 · 리더의 내 정보와 활동 확인)을 끝에서 끝까지 한 번씩 돌려 통과를 확인한다
 - [ ] 10.2 성능 지표(API 100ms · 목록 렌더 50ms · 받아쓰기 60초)를 측정해 기록한다
+- [ ] 10.3 개발이 끝난 뒤 `pytest` 로 전체 테스트를 돌려 통과 · 실패 건수와 실패 내용을 사용자에게 보고한다. 보고에는 실행 명령과 출력 요약이 있어야 한다
+
+## 11. 사람이 눈으로 확인하는 수락
+
+- [ ] 11.1 (사람이 확인) 서버를 띄우고 브라우저에서 ① `/docs` Swagger UI 에서 가입 → `Authorize` 로 토큰 입력 → 팀 생성 → 회의록 저장을 호출해 보고, ② 같은 계정으로 6개 화면(`login` · `meetings` · `detail` · `todos` · `team` · `profile`)을 열어 `publish/` 와 색 · 모양이 같게 보이며, 라이트와 다크 모두 깨지지 않는지 눈으로 확인한다. 이 항목은 사용자만 체크한다
