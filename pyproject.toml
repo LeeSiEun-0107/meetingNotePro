@@ -1,0 +1,20 @@
+[project]
+name = "meetingnote-pro"
+version = "0.1.0"
+description = "팀이 함께 쓰는 회의록. 녹취를 받아쓴 본문을 요약 · 결정사항 · 할 일로 나눈다"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0,<3",
+    "bcrypt>=4.1,<5",
+    "PyJWT>=2.8,<3",
+    "python-multipart>=0.0.9",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+    "psycopg[binary]>=3.2",
+]
+
+# Vercel: 앱은 backend/app/main.py 의 app. frontend/ 는 StaticFiles 마운트가 CDN 으로 올라간다
+[tool.vercel]
+entrypoint = "backend.app.main:app"

@@ -57,4 +57,23 @@ Gemini 는 부르지 않고 가짜로 바꿔 돌린다. 프런트 규칙 검사�
 ## 알려둘 것
 
 - 업로드(`/api/upload`)는 로컬에서 서버가 파일을 직접 받는다. 배포(Vercel)의 Blob 직접 업로드는 아직 구현 전이다 (`tasks.md` 4.1 · 4.6)
-- Gemini 는 실제 키로 확인했다 (100초 wav 4.19MB 받아쓰기 약 5초, 같은 내용의 mp3 약 4초, 세 항목 구분). 업로드 상한은 5MB 다. 자동 테스트는 Gemini 를 가짜로 대체하고, 실제 호출 테스트는 `REAL_GEMINI=1` 일 때만 돈다
+- Gemini 는 실제 키로 확인했다 (100초 wav 4.19MB 받아쓰기 약 5초, 같은 내용의 mp3 약 4초, 세 항목 구분). 업로드 상한은 4.5MB 다. 자동 테스트는 Gemini 를 가짜로 대체하고, 실제 호출 테스트는 `REAL_GEMINI=1` 일 때만 돈다
+
+## Vercel 배포
+
+설정 파일은 준비되어 있다 (`pyproject.toml` 의 `[tool.vercel]`, `vercel.json`, `.vercelignore`). 계정이 필요한 단계는 직접 한다.
+
+1. Vercel 에서 이 저장소(GitHub)를 가져온다. Framework 는 FastAPI(자동 감지)
+2. **Storage 에서 Neon Postgres 를 연결한다.** `DATABASE_URL` 이 자동으로 들어간다
+3. Environment Variables 에 넣는다 (모두 Production):
+
+| 이름 | 값 |
+|---|---|
+| `GEMINI_API_KEY` | Gemini 키 |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` |
+| `JWT_SECRET` | 길고 무작위인 문자열 (예: `python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
+
+4. 배포 후 `https://<프로젝트>.vercel.app/` 에서 가입 · 팀 만들기 · 회의록 저장을 해 보고, `/docs` 로 API 를 호출해 본다
+
+`JWT_SECRET` 이나 `DATABASE_URL` 이 없으면 앱이 일부러 기동을 거부한다 (공개된 기본 비밀키 사용과 읽기 전용 디스크의 SQLite 를 막는 장치).
+Vercel 함수 요청 본문 한도가 4.5MB 라 업로드 상한도 4.5MB 다.

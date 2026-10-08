@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 
-MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+MAX_UPLOAD_BYTES = int(4.5 * 1024 * 1024)  # Vercel 함수 요청 본문 한도(약 4.5MB)에 맞춤
 MAX_TEAM_MEMBERS = 6
 MAX_COMMENT_LEN = 500
 ACTIVITY_LIMIT = 50
@@ -24,15 +24,27 @@ def gemini_model() -> str:
     return os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
 
+def on_vercel() -> bool:
+    return bool(os.getenv("VERCEL"))
+
+
 def jwt_secret() -> str:
-    # 배포에서는 반드시 환경변수로 덮는다. 로컬 기본값은 개발 전용
-    return os.getenv("JWT_SECRET", "dev-only-secret-change-me-0123456789abcdef")
+    secret = os.getenv("JWT_SECRET", "")
+    if secret:
+        return secret
+    if on_vercel():
+        # 배포에서 공개된 기본값으로 토큰을 서명하면 누구나 로그인 토큰을 만들 수 있다
+        raise RuntimeError("배포 환경에는 JWT_SECRET 환경변수가 필요합니다")
+    return "dev-only-secret-change-me-0123456789abcdef"  # 로컬 개발 전용
 
 
 def database_url() -> str:
     """DATABASE_URL 이 있으면 Postgres(Neon), 없으면 로컬 SQLite 한 줄 분기."""
     url = os.getenv("DATABASE_URL", "").strip()
     if not url:
+        if on_vercel():
+            # 배포 환경은 요청마다 새 환경이라 SQLite 파일을 쓸 수 없다
+            raise RuntimeError("배포 환경에는 DATABASE_URL(Neon) 환경변수가 필요합니다")
         return f"sqlite:///{ROOT / 'meetingnote.db'}"
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]

@@ -1,0 +1,15 @@
+# 배포에 필요 없는 것 (용량을 줄이고 비밀 · 개발 도구가 올라가지 않게)
+.env
+.venv/
+backend/.venv/
+backend/tests/
+.playwright-mcp/
+.claude/
+docs/
+publish/
+openspec/
+*.db
+*.pdf
+*.zip
+TODO.md
+TODO-완료.md

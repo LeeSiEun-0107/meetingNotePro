@@ -78,7 +78,7 @@
     <!-- 녹취 올리기 -->
     <div id="dropZone" class="mt-3 rounded-xl border-2 border-dashed border-line dark:border-edge px-4 py-6 text-center">
       <p class="text-[13px] font-bold" id="dropTitle">녹취 파일을 끌어다 놓기</p>
-      <p class="text-[11px] text-ink-3 dark:text-dim mt-1" id="dropSub">mp3 · wav · 5MB 이하. 또는 아래에 메모를 붙여넣기</p>
+      <p class="text-[11px] text-ink-3 dark:text-dim mt-1" id="dropSub">mp3 · wav · 4.5MB 이하. 또는 아래에 메모를 붙여넣기</p>
       <div id="progWrap" class="hidden mt-3">
         <div class="h-1.5 rounded-full bg-page dark:bg-chip overflow-hidden">
           <div id="prog" class="h-full bg-blue-dot transition-all" style="width:0%"></div>
@@ -166,7 +166,7 @@
     $("prog").style.width = "0%";
     ["nTitle","nAt","nWho","nBody"].forEach(i => $(i).value = "");
     $("dropTitle").textContent = "녹취 파일을 끌어다 놓기";
-    $("dropSub").textContent = "mp3 · wav · 5MB 이하. 또는 아래에 메모를 붙여넣기";
+    $("dropSub").textContent = "mp3 · wav · 4.5MB 이하. 또는 아래에 메모를 붙여넣기";
     $("saveBtn").disabled = false;
     $("saveBtn").textContent = "정리하기";
   };
@@ -221,8 +221,8 @@
   async function upload(f){
     if (uploading) return;
     $("dropErr").classList.add("hidden");
-    if (f.size > 5 * 1024 * 1024) {
-      showErr("red", "5MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
+    if (f.size > 4.5 * 1024 * 1024) {
+      showErr("red", "4.5MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
       return;
     }
     uploading = true;
@@ -248,9 +248,9 @@
     } catch (e) {
       $("progWrap").classList.add("hidden");
       $("dropTitle").textContent = "녹취 파일을 끌어다 놓기";
-      $("dropSub").textContent = "mp3 · wav · 5MB 이하. 또는 아래에 메모를 붙여넣기";
+      $("dropSub").textContent = "mp3 · wav · 4.5MB 이하. 또는 아래에 메모를 붙여넣기";
       if (e.code === "UNSUPPORTED_MEDIA_TYPE") showErr("red", "mp3 또는 wav 만 올릴 수 있음", "올린 파일 형식을 확인해 주세요");
-      else if (e.code === "PAYLOAD_TOO_LARGE") showErr("red", "5MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
+      else if (e.code === "PAYLOAD_TOO_LARGE") showErr("red", "4.5MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
       else showErr("red", "받아쓰기에 실패함", "메모를 직접 붙여 넣어도 됨");
     } finally {
       clearInterval(tick);
