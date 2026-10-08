@@ -9,3 +9,4 @@ __pycache__/
 .pytest_cache/
 meetingnote.db
 *.db
+.playwright-mcp/

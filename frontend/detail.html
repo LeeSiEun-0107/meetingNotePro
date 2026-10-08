@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 회의록 상세</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+<script src="api.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <a href="meetings.html" class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+    </a>
+    <nav class="flex items-center gap-1 text-[13px] font-bold ml-2 min-w-0 overflow-x-auto">
+      <a href="meetings.html" class="px-2.5 py-1 rounded-lg bg-page dark:bg-chip">회의록</a>
+      <a href="todos.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">할 일</a>
+      <a href="team.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">팀</a>
+      <a href="profile.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">내 정보</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2" id="themeSlot"></div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5 space-y-4">
+
+  <!-- 머리 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-start gap-3">
+      <div class="flex-1 min-w-[240px]">
+        <input id="title" value="2차 스프린트 계획 회의"
+          class="w-full text-lg font-extrabold bg-transparent border-0 p-0 focus:outline-none focus:ring-0" readonly>
+        <p class="mt-1 text-[12px] text-ink-3 dark:text-dim">
+          <span id="at">2026-09-24 14:00</span>  ·  <span id="who">김대리, 박과장, 이주임</span>
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <button id="editBtn" class="h-10 px-3.5 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-[13px] font-bold hover:border-ink dark:hover:border-dim transition">수정</button>
+        <button id="delBtn" class="h-10 px-3.5 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-[13px] font-bold text-red-text dark:text-red-dot hover:border-red-dot transition">삭제</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 삭제 확인 -->
+  <section id="delConfirm" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge
+           border-l-[6px] border-l-red-dot p-5">
+    <p class="text-[13px] font-bold text-red-text dark:text-red-dot">이 회의록을 삭제</p>
+    <p class="text-[12px] text-ink-2 dark:text-dim mt-1">딸린 할 일 3건도 함께 사라짐. 되돌릴 수 없음</p>
+    <div class="mt-3 flex gap-2.5">
+      <button id="delNo" class="h-10 px-3.5 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-[13px] font-bold transition">취소</button>
+      <button class="h-10 px-3.5 rounded-xl bg-red-dot text-white text-[13px] font-bold hover:opacity-90 transition">삭제</button>
+    </div>
+  </section>
+
+  <!-- 세 항목 -->
+  <div class="grid gap-3 lg:grid-cols-3">
+    <!-- 요약 -->
+    <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-blue-dot p-5">
+      <div class="flex items-baseline gap-2 mb-2.5">
+        <h2 class="text-sm font-extrabold text-blue-text dark:text-blue-dot">요약</h2>
+        <span class="text-[11px] text-ink-3 dark:text-dim">3~5줄</span>
+      </div>
+      <p id="summary" class="text-[13px] leading-relaxed text-ink-2 dark:text-dim whitespace-pre-line">회의록 정리기 2차 스프린트 계획을 다루었다.
+목록 화면 검색 범위를 제목과 참석자로 확정했다.
+업로드 용량은 25MB 로 제한하기로 했다.
+받아쓰기 유료 전환은 다음 회의로 미루었다.</p>
+    </section>
+
+    <!-- 결정사항 -->
+    <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-green-dot p-5">
+      <div class="flex items-baseline gap-2 mb-2.5">
+        <h2 class="text-sm font-extrabold text-green-text dark:text-green-dot">결정사항</h2>
+        <span class="text-[11px] text-ink-3 dark:text-dim">합의가 끝난 것만</span>
+      </div>
+      <ul id="decisions" class="space-y-2 text-[13px] leading-relaxed">
+        <li class="flex gap-2"><span class="text-green-text dark:text-green-dot font-bold shrink-0">1</span><span>목록 검색은 제목과 참석자 범위로 한정</span></li>
+        <li class="flex gap-2"><span class="text-green-text dark:text-green-dot font-bold shrink-0">2</span><span>업로드 용량 상한은 25MB</span></li>
+      </ul>
+    </section>
+
+    <!-- 할 일 -->
+    <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-orange-dot p-5">
+      <div class="flex items-baseline gap-2 mb-2.5">
+        <h2 class="text-sm font-extrabold text-orange-text dark:text-orange-dot">할 일</h2>
+        <span class="text-[11px] text-ink-3 dark:text-dim">담당자 · 기한</span>
+      </div>
+      <ul id="todos" class="space-y-2.5"></ul>
+    </section>
+  </div>
+
+  <!-- 본문 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <button id="bodyToggle" class="flex items-center gap-2 text-sm font-extrabold">
+      <span>받아쓴 본문</span>
+      <span class="text-[11px] font-bold text-ink-3 dark:text-dim" id="bodyState">펼치기</span>
+    </button>
+    <pre id="body" class="hidden mt-3 text-[12px] leading-relaxed text-ink-2 dark:text-dim whitespace-pre-wrap font-sans">김대리: 목록 화면 검색 범위를 제목과 참석자로 하겠습니다.
+박과장: 좋습니다. 업로드 용량은 25MB 로 제한하죠.
+이주임: 받아쓰기 유료 전환은 다음에 다시 보겠습니다.
+김대리: 목록과 검색은 제가 다음 주 금요일까지 하겠습니다.
+이주임: 받아쓰기 오류 처리는 제가 이번 주 안에 하겠습니다.</pre>
+  </section>
+
+  <!-- 댓글 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-purple-dot p-5">
+    <div class="flex items-baseline gap-2 mb-3">
+      <h2 class="text-sm font-extrabold text-purple-text dark:text-purple-dot">댓글</h2>
+      <span id="cCount" class="text-[11px] text-ink-3 dark:text-dim"></span>
+      <span class="ml-auto text-[11px] text-ink-3 dark:text-dim">500자 이내</span>
+    </div>
+    <ul id="comments" class="space-y-2.5 mb-3"></ul>
+    <div id="cEmpty" class="hidden mb-3 text-[12px] text-ink-3 dark:text-dim">아직 댓글이 없음  -  결정에 의견이 있으면 여기에</div>
+    <div class="flex gap-2.5">
+      <input id="cInput" placeholder="이 회의에 대한 의견"
+        class="flex-1 h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+               placeholder:text-ink-3 dark:placeholder:text-dim focus:outline-none focus:border-purple-dot transition">
+      <button id="cBtn" class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold hover:opacity-90 transition">등록</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme(() => renderTodos());
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const MID = new URLSearchParams(location.search).get("id");
+  let ME = null, MEETING = null, MEMBERS = [], TODOS = [], CM = [], editing = false;
+
+  const STATUS = {
+    OPEN:  {label:"대기", color:"orange"},
+    DOING: {label:"진행", color:"blue"},
+    DONE:  {label:"완료", color:"green"}
+  };
+
+  const todoRow = (t, i) => {
+    const st = STATUS[t.status] || STATUS.OPEN;
+    return `
+    <li class="rounded-xl bg-page dark:bg-chip border border-line dark:border-edge p-3">
+      <p class="text-[13px] font-bold leading-snug">${esc(t.what)}</p>
+      <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        <select data-i="${i}" class="assign h-7 px-2 rounded-md bg-white dark:bg-surface border border-line dark:border-edge text-[11px] font-bold focus:outline-none focus:border-blue-dot transition">
+          <option value="" ${t.assignee_id == null ? "selected" : ""}>미정</option>
+          ${MEMBERS.map(m => `<option value="${m.id}" ${m.id === t.assignee_id ? "selected" : ""}>${esc(m.name)}</option>`).join("")}
+        </select>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-surface text-ink-2 dark:text-dim">${esc(t.due_text || "미정")}</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${window.LABEL[st.color]} bg-white dark:bg-surface ml-auto">${st.label}</span>
+      </div>
+    </li>`;
+  };
+
+  function renderTodos(){
+    if (!TODOS.length) {
+      $("todos").innerHTML = `<li class="text-[12px] text-ink-3 dark:text-dim">담당자와 기한이 드러난 항목 없음</li>`;
+      return;
+    }
+    $("todos").innerHTML = TODOS.map(todoRow).join("");
+    document.querySelectorAll("select.assign").forEach(function(sel){
+      sel.onchange = async function(){
+        const t = TODOS[+sel.dataset.i];
+        if (!t) return;
+        const prev = t.assignee_id;
+        try {
+          const r = await API.put("/api/todos/" + t.id, {assignee_id: sel.value === "" ? null : +sel.value});
+          TODOS[+sel.dataset.i] = Object.assign({}, t, r);
+          renderTodos();
+        } catch (e) {
+          API.showError(e);
+          sel.value = prev == null ? "" : String(prev);
+        }
+      };
+    });
+  }
+
+  function renderDecisions(){
+    const lines = String((MEETING && MEETING.decisions) || "").split("\n").map(s => s.trim()).filter(Boolean);
+    $("decisions").innerHTML = lines.length
+      ? lines.map((d, i) => `<li class="flex gap-2"><span class="text-green-text dark:text-green-dot font-bold shrink-0">${i + 1}</span><span>${esc(d)}</span></li>`).join("")
+      : `<li class="text-[12px] text-ink-3 dark:text-dim">합의가 끝난 항목 없음  -  논의만 하고 정하지 않은 것은 넣지 않음</li>`;
+  }
+
+  function renderMeeting(){
+    const m = MEETING;
+    $("title").value = m.title;
+    $("at").textContent = fmt.dt(m.met_at);
+    $("who").textContent = m.attendees || "";
+    $("summary").textContent = m.summary || "";
+    $("body").textContent = m.body || "";
+    renderDecisions();
+    $("delConfirm").querySelector("p.mt-1").textContent = "딸린 할 일 " + (m.todo_total_count != null ? m.todo_total_count : TODOS.length) + "건도 함께 사라짐. 되돌릴 수 없음";
+    const allowed = m.author_id === ME.id || ME.role === "owner";
+    ["editBtn","delBtn"].forEach(function(id){
+      $(id).disabled = !allowed;
+      $(id).classList.toggle("opacity-40", !allowed);
+      $(id).classList.toggle("pointer-events-none", !allowed);
+    });
+  }
+
+  function renderComments(){
+    $("comments").innerHTML = CM.map(function(c){ return `
+      <li class="rounded-xl bg-page dark:bg-chip border border-line dark:border-edge px-3.5 py-2.5">
+        <p class="text-[13px]"><span class="font-bold">${esc(c.user_name)}</span>  ${esc(c.content)}</p>
+        <p class="text-[11px] text-ink-3 dark:text-dim mt-0.5">${fmt.when(c.created_at)}
+          ${c.can_delete ? `<button type="button" data-del-c="${c.id}" class="ml-2 text-red-text dark:text-red-dot font-bold">삭제</button>` : ""}</p>
+      </li>`; }).join("");
+    $("cCount").textContent = CM.length ? CM.length + "건" : "";
+    $("comments").classList.toggle("hidden", CM.length === 0);
+    document.querySelectorAll("[data-del-c]").forEach(function(b){
+      b.onclick = async function(){
+        const id = +b.dataset.delC;
+        try {
+          await API.del("/api/comments/" + id);
+          CM = CM.filter(function(x){ return x.id !== id; });
+          renderComments();
+        } catch (e) { API.showError(e); }
+      };
+    });
+    $("cEmpty").classList.toggle("hidden", CM.length > 0);
+  }
+
+  // 수정 모드
+  const INPUT_CLS = "w-full px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm placeholder:text-ink-3 dark:placeholder:text-dim focus:outline-none focus:border-purple-dot transition";
+  const GHOST_CLS = "h-10 px-3.5 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-[13px] font-bold hover:border-ink dark:hover:border-dim transition";
+  const PRIMARY_CLS = "h-10 px-3.5 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-[13px] font-bold hover:opacity-90 transition";
+  const toLocalInput = (iso) => fmt.dt(iso).replace(" ", "T");
+
+  function enterEdit(){
+    editing = true;
+    $("title").readOnly = false;
+    $("title").classList.add("ring-2","ring-blue-dot/25","rounded-lg","px-2");
+    $("at").innerHTML = `<input id="atIn" type="datetime-local" class="${INPUT_CLS} h-9 w-auto" value="${toLocalInput(MEETING.met_at)}">`;
+    $("who").innerHTML = `<input id="whoIn" type="text" class="${INPUT_CLS} h-9 w-auto" value="${esc(MEETING.attendees)}">`;
+    const ta = document.createElement("textarea");
+    ta.id = "bodyIn";
+    ta.rows = 10;
+    ta.className = INPUT_CLS + " mt-3 py-2.5 leading-relaxed font-sans";
+    ta.value = MEETING.body || "";
+    $("body").classList.add("hidden");
+    $("body").after(ta);
+    $("editBtn").classList.add("hidden");
+    $("delBtn").classList.add("hidden");
+    const wrap = $("editBtn").parentNode;
+    const save = document.createElement("button");
+    save.id = "saveBtn"; save.className = PRIMARY_CLS; save.textContent = "저장";
+    const cancel = document.createElement("button");
+    cancel.id = "cancelBtn"; cancel.className = GHOST_CLS; cancel.textContent = "취소";
+    wrap.append(save, cancel);
+    cancel.onclick = exitEdit;
+    save.onclick = async function(){
+      const title = $("title").value.trim();
+      if (!title) { API.toast("red", "저장하지 못함", "제목을 입력해 주세요"); return; }
+      const at = $("atIn").value;
+      if (!at) { API.toast("red", "저장하지 못함", "회의 시각을 입력해 주세요"); return; }
+      save.disabled = true;
+      try {
+        const r = await API.put("/api/meetings/" + MID, {title, met_at: fmt.toIso(at), attendees: $("whoIn").value.trim(), body: $("bodyIn").value});
+        MEETING = Object.assign({}, MEETING, r);
+        exitEdit();
+      } catch (e) { save.disabled = false; API.showError(e); }
+    };
+  }
+
+  function exitEdit(){
+    editing = false;
+    const ta = $("bodyIn"); if (ta) ta.remove();
+    ["saveBtn","cancelBtn"].forEach(function(id){ const b = $(id); if (b) b.remove(); });
+    $("editBtn").classList.remove("hidden");
+    $("delBtn").classList.remove("hidden");
+    $("title").readOnly = true;
+    $("title").classList.remove("ring-2","ring-blue-dot/25","rounded-lg","px-2");
+    renderMeeting();
+  }
+
+  $("bodyToggle").onclick = () => {
+    if (editing) return;
+    const hid = $("body").classList.toggle("hidden");
+    $("bodyState").textContent = hid ? "펼치기" : "접기";
+  };
+  $("delBtn").onclick = () => $("delConfirm").classList.remove("hidden");
+  $("delNo").onclick = () => $("delConfirm").classList.add("hidden");
+  $("delConfirm").querySelector("button:not(#delNo)").id = "delYes";
+  $("delYes").onclick = async () => {
+    try {
+      await API.del("/api/meetings/" + MID);
+      location.href = "/meetings.html";
+    } catch (e) { API.showError(e); }
+  };
+  $("editBtn").onclick = () => { if (!editing) enterEdit(); };
+  $("cBtn").onclick = async () => {
+    const content = $("cInput").value.trim();
+    if (!content) { API.toast("red", "댓글을 등록하지 못함", "내용을 입력해 주세요"); return; }
+    if (content.length > 500) { API.toast("red", "댓글을 등록하지 못함", "500자 이내로 적어 주세요"); return; }
+    $("cBtn").disabled = true;
+    try {
+      const c = await API.post("/api/meetings/" + MID + "/comments", {content});
+      CM.push(c);
+      $("cInput").value = "";
+      renderComments();
+    } catch (e) { API.showError(e); }
+    $("cBtn").disabled = false;
+  };
+
+  async function init(){
+    ME = await API.requireTeam();
+    if (!MID) { notFound(); return; }
+    try {
+      MEETING = await API.get("/api/meetings/" + MID);
+    } catch (e) {
+      if (e.code === "MEETING_NOT_FOUND" || e.status === 404) { notFound(); return; }
+      API.showError(e); return;
+    }
+    try {
+      const [todos, members, cms] = await Promise.all([
+        API.get("/api/teams/" + ME.team_id + "/todos"),
+        API.get("/api/teams/" + ME.team_id + "/members"),
+        API.get("/api/meetings/" + MID + "/comments")
+      ]);
+      MEMBERS = members || [];
+      TODOS = (todos || []).filter(t => String(t.meeting_id) === String(MEETING.id));
+      CM = cms || [];
+    } catch (e) { API.showError(e); }
+    renderMeeting();
+    renderTodos();
+    renderComments();
+  }
+
+  function notFound(){
+    $("title").value = "";
+    $("summary").textContent = "없는 회의록";
+    $("decisions").innerHTML = "";
+    $("todos").innerHTML = "";
+    ["editBtn","delBtn"].forEach(id => $(id).classList.add("hidden"));
+    API.toast("red", "MEETING_NOT_FOUND", "없는 회의록. 목록으로 돌아갑니다");
+    setTimeout(() => { location.href = "/meetings.html"; }, 1500);
+  }
+
+  init();
+</script>
+</body>
+</html>

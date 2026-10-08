@@ -10,7 +10,7 @@ ALGO = "HS256"
 
 
 def hash_password(pw: str) -> str:
-    return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt()).decode("ascii")
+    return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=config.BCRYPT_ROUNDS)).decode("ascii")
 
 
 def verify_password(pw: str, hashed: str) -> bool:

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 할 일 칸반</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+<script src="api.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <a href="meetings.html" class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+    </a>
+    <nav class="flex items-center gap-1 text-[13px] font-bold ml-2 min-w-0 overflow-x-auto">
+      <a href="meetings.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">회의록</a>
+      <span class="px-2.5 py-1 rounded-lg bg-page dark:bg-chip">할 일</span>
+      <a href="team.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">팀</a>
+      <a href="profile.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">내 정보</a>
+    </nav>
+    <div class="ml-auto" id="themeSlot"></div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5">
+
+  <!-- 탭 + 필터 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-4 mb-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex gap-1 p-1 rounded-xl bg-page dark:bg-chip">
+        <button id="tabMine" class="px-3 py-1.5 rounded-lg text-[13px] font-bold transition">내 할 일</button>
+        <button id="tabAll"  class="px-3 py-1.5 rounded-lg text-[13px] font-bold transition">전체</button>
+      </div>
+      <select id="fWho" class="h-10 px-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-[13px] font-bold focus:outline-none focus:border-blue-dot transition">
+        <option>담당자 전체</option><option>미정</option>
+      </select>
+      <span id="sum" class="ml-auto text-[12px] text-ink-3 dark:text-dim"></span>
+    </div>
+  </section>
+
+  <!-- 칸반 3열 -->
+  <div id="board" class="grid gap-3 md:grid-cols-3"></div>
+
+  <div id="empty" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge px-5 py-12 text-center">
+    <p class="text-sm font-bold" id="emptyTitle">배정된 할 일이 없음</p>
+    <p class="text-[12px] text-ink-2 dark:text-dim mt-1" id="emptySub">회의록을 올리면 할 일이 자동으로 뽑혀 나옴</p>
+  </div>
+
+  <div id="toast" class="hidden mt-4"></div>
+  <p class="mt-3 text-[11px] text-ink-3 dark:text-dim">카드를 끌어 옮기거나, 눌러서 옮길 칸을 고릅니다. 좁은 화면에서는 누르는 길을 씁니다.</p>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme(() => render());
+
+  const $ = (id) => document.getElementById(id);
+  const COLS = [
+    {key:"OPEN",  label:"대기", color:"orange"},
+    {key:"DOING", label:"진행", color:"blue"},
+    {key:"DONE",  label:"완료", color:"green"}
+  ];
+
+  let me = null, DATA = [], MEMBERS = [], mine = true, dragId = null, overCol = null;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const whoOf = (t) => t.assignee_name || "미정";
+  const lateOf = (t) => window.isLate(t.due_text, t.status);
+
+  const chip = (t) => { const late = lateOf(t); const locked = !(me && me.role === "owner"); return `
+    <article data-id="${t.id}"
+      class="card touch-none select-none cursor-grab active:cursor-grabbing rounded-xl bg-white dark:bg-surface border border-line dark:border-edge
+             ${late ? window.STRIPE.red : ""} p-3 hover:border-ink dark:hover:border-dim transition
+             ${dragId === t.id ? "opacity-40" : ""}">
+      <p class="text-[13px] font-bold leading-snug">${esc(t.what)}</p>
+      <p class="mt-1 text-[11px] text-ink-3 dark:text-dim">${esc(t.meeting_title)}</p>
+      <div class="mt-2 flex items-center gap-1.5">
+        <button type="button" data-act="assign" data-id="${t.id}"
+          class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim hover:ring-1 hover:ring-ink-3 transition">${esc(whoOf(t))}</button>
+        <button type="button" data-act="due" data-id="${t.id}"
+          class="px-2 py-0.5 rounded-md text-[10px] font-bold ${late ? "text-red-text dark:text-red-dot" : "text-ink-2 dark:text-dim"} bg-page dark:bg-chip hover:ring-1 hover:ring-ink-3 transition">${esc(t.due_text || "미정")}</button>
+        <button type="button" data-act="del" data-id="${t.id}"${locked ? " disabled" : ""}
+          class="ml-auto px-2 py-0.5 rounded-md text-[10px] font-bold text-red-text dark:text-red-dot bg-page dark:bg-chip hover:ring-1 hover:ring-red-dot transition${locked ? " opacity-40 pointer-events-none" : ""}">삭제</button>
+      </div>
+    </article>`; };
+
+  function visible(){
+    const w = $("fWho").value;
+    return w === "담당자 전체" ? DATA : DATA.filter(t => whoOf(t) === w);
+  }
+
+  function render(){
+    const rows = visible();
+    $("board").innerHTML = COLS.map(c => {
+      const items = rows.filter(t => t.status === c.key);
+      const hot = overCol === c.key;
+      return `
+      <section data-col="${c.key}"
+        class="dropzone rounded-2xl bg-white dark:bg-surface border ${hot ? "border-dashed border-2 border-" + c.color + "-dot" : "border-line dark:border-edge"}
+               ${window.STRIPE[c.color]} p-4 min-h-[220px] transition">
+        <div class="flex items-baseline gap-2 mb-3">
+          <h2 class="text-sm font-extrabold ${window.LABEL[c.color]}">${c.label}</h2>
+          <span class="text-[11px] text-ink-3 dark:text-dim">${items.length}건</span>
+          ${hot ? `<span class="ml-auto text-[10px] font-extrabold ${window.LABEL[c.color]}">여기에 놓기</span>` : ""}
+        </div>
+        <div class="space-y-2.5">${items.map(chip).join("") ||
+          `<p class="text-[12px] text-ink-3 dark:text-dim py-2">없음</p>`}</div>
+      </section>`;
+    }).join("");
+    $("board").classList.toggle("hidden", rows.length === 0);
+    $("empty").classList.toggle("hidden", rows.length > 0);
+    const done = rows.filter(t => t.status === "DONE").length;
+    $("sum").textContent = rows.length ? `${done} / ${rows.length} 완료` : "";
+    $("tabMine").className = "px-3 py-1.5 rounded-lg text-[13px] font-bold transition " +
+      (mine ? "bg-white dark:bg-surface shadow-sm" : "text-ink-2 dark:text-dim");
+    $("tabAll").className = "px-3 py-1.5 rounded-lg text-[13px] font-bold transition " +
+      (!mine ? "bg-white dark:bg-surface shadow-sm" : "text-ink-2 dark:text-dim");
+    bindDrag();
+    bindBadge();
+  }
+
+  // 담당자 · 기한 배지 - 눌러서 바꾼다 (PUT /api/todos/{id})
+  //   퍼블리싱에 조작 수단이 없으면 specs/todo 의 배정과 기한을 화면에서 할 수 없다
+  const WHEN = ["미정", "오늘", "이번 주 안", "다음 주 금요일", "어제", "지난 주"];
+
+  // 낙관적으로 바꾸고 서버를 한 번 부른다. 실패하면 서버 값으로 다시 불러와 되돌린다
+  async function save(t, patch, apply, okTitle, okBody){
+    apply();
+    render();
+    try {
+      await API.put("/api/todos/" + t.id, patch);
+      toast("green", okTitle, okBody);
+    } catch (e) {
+      API.showError(e);
+      await load(true);
+    }
+  }
+
+  async function removeTodo(t){
+    try {
+      await API.del("/api/todos/" + t.id);
+      const k = DATA.indexOf(t);
+      if (k >= 0) DATA.splice(k, 1);
+      toast("red", "삭제", "할 일을 삭제했습니다");
+    } catch (e) { API.showError(e); }
+    render();
+  }
+
+  function bindBadge(){
+    document.querySelectorAll("[data-act]").forEach(el => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const t = DATA.find(x => x.id === +el.dataset.id);
+        if (!t) return;
+        if (el.dataset.act === "assign") {
+          const names = ["미정"].concat(MEMBERS.map(m => m.name));
+          const next = names[(names.indexOf(whoOf(t)) + 1) % names.length];
+          const m = MEMBERS.find(x => x.name === next);
+          save(t, {assignee_id: m ? m.id : null},
+            () => { t.assignee_id = m ? m.id : null; t.assignee_name = m ? m.name : null; },
+            "담당자 배정", "담당자를 바꿨습니다");
+        } else if (el.dataset.act === "del") {
+          if (!me || me.role !== "owner") return;
+          removeTodo(t);
+          return;
+        } else {
+          const next = WHEN[(WHEN.indexOf(t.due_text || "미정") + 1) % WHEN.length];
+          save(t, {due_text: next}, () => { t.due_text = next; }, "기한 변경", "기한을 바꿨습니다");
+        }
+      });
+      el.addEventListener("mousedown", (e) => e.stopPropagation());
+    });
+  }
+
+  // 끌어 옮기기 - 포인터 이벤트 한 벌로 마우스 · 터치 · 펜을 모두 받는다
+  //   HTML5 네이티브 드래그(draggable + dragstart)는 터치에서 이벤트가 뜨지 않아
+  //   휴대폰에서 카드가 움직이지 않았다. pointer 계열은 입력 장치를 가리지 않는다
+  let ghost = null, startX = 0, startY = 0, moved = false;
+
+  function colUnder(x, y){
+    const el = document.elementFromPoint(x, y);
+    const z = el && el.closest(".dropzone");
+    return z ? z.dataset.col : null;
+  }
+
+  function bindDrag(){
+    document.querySelectorAll(".card").forEach(el => {
+      el.addEventListener("pointerdown", (e) => {
+        if (e.target.closest("[data-act]")) return;   // 배지는 누르는 것이지 끄는 것이 아님
+        if (e.button !== undefined && e.button !== 0) return;
+        dragId = +el.dataset.id;
+        startX = e.clientX; startY = e.clientY; moved = false;
+        el.setPointerCapture(e.pointerId);
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (dragId === null) return;
+        if (!moved) {
+          if (Math.abs(e.clientX - startX) < 6 && Math.abs(e.clientY - startY) < 6) return;
+          moved = true;
+          const r = el.getBoundingClientRect();
+          ghost = el.cloneNode(true);
+          ghost.classList.add("fixed", "pointer-events-none", "z-50", "opacity-80", "shadow-lg");
+          ghost.style.width = r.width + "px";
+          document.body.appendChild(ghost);
+          render();
+        }
+        e.preventDefault();
+        ghost.style.left = (e.clientX - 40) + "px";
+        ghost.style.top = (e.clientY - 18) + "px";
+        const c = colUnder(e.clientX, e.clientY);
+        if (c !== overCol) { overCol = c; render(); }
+      });
+      const finish = (e) => {
+        if (dragId === null) return;
+        if (ghost) { ghost.remove(); ghost = null; }
+        const id = dragId;
+        const col = moved ? colUnder(e.clientX, e.clientY) : null;
+        const wasTap = !moved;
+        const t = DATA.find(x => x.id === id);
+        if (t && col && t.status !== col) {
+          moveTo(t, col);
+        }
+        dragId = null; overCol = null; moved = false;
+        render();
+        // 끌지 않고 눌렀으면 옮길 칸을 고르는 메뉴를 연다 (휴대폰에서 유일한 길)
+        if (wasTap && t) openPicker(id);
+      };
+      el.addEventListener("pointerup", finish);
+      el.addEventListener("pointercancel", finish);
+    });
+  }
+
+  function moveTo(t, col){
+    const label = COLS.find(c => c.key === col).label;
+    return save(t, {status: col}, () => { t.status = col; }, "상태를 옮김", label + " 칸으로 옮겼습니다");
+  }
+
+  // 카드를 누르면 뜨는 상태 선택 메뉴. 끌 수 없는 좁은 화면에서 쓰는 길
+  function openPicker(id){
+    closePicker();
+    const card = document.querySelector('.card[data-id="' + id + '"]');
+    const t = DATA.find(x => x.id === id);
+    if (!card || !t) return;
+    const box = document.createElement("div");
+    box.id = "picker";
+    box.className = "mt-2 flex gap-1.5 border-t border-line dark:border-edge pt-2";
+    COLS.forEach(c => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = c.label;
+      b.className = "flex-1 py-1.5 rounded-lg text-[11px] font-bold transition " +
+        (t.status === c.key
+          ? "bg-page dark:bg-chip text-ink-3 dark:text-dim"
+          : "bg-white dark:bg-surface border border-line dark:border-edge hover:border-ink dark:hover:border-dim " + window.LABEL[c.color]);
+      if (t.status !== c.key) {
+        b.addEventListener("click", (ev) => { ev.stopPropagation(); moveTo(t, c.key); });
+      }
+      b.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+      box.appendChild(b);
+    });
+    card.appendChild(box);
+  }
+
+  function closePicker(){
+    const p = document.getElementById("picker");
+    if (p) p.remove();
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest(".card")) closePicker();
+  });
+
+  const toast = (kind, title, body) => {
+    $("toast").innerHTML = window.notice(kind, title, body);
+    $("toast").classList.remove("hidden");
+  };
+
+  async function load(quiet){
+    try {
+      DATA = await API.get(mine ? "/api/me/todos" : "/api/teams/" + me.team_id + "/todos");
+    } catch (e) { API.showError(e); DATA = []; }
+    $("emptyTitle").textContent = "배정된 할 일이 없음";
+    $("emptySub").textContent = "회의록을 올리면 할 일이 자동으로 뽑혀 나옴";
+    render();
+  }
+
+  async function setTab(m){
+    mine = m;
+    $("toast").classList.add("hidden");
+    await load();
+  }
+
+  $("tabMine").onclick = () => setTab(true);
+  $("tabAll").onclick  = () => setTab(false);
+  $("fWho").onchange = () => render();   // 거름은 화면에서만. 서버를 다시 부르지 않음
+
+  (async () => {
+    me = await API.requireTeam();
+    try {
+      MEMBERS = await API.get("/api/teams/" + me.team_id + "/members");
+      $("fWho").innerHTML = ["담당자 전체"].concat(MEMBERS.map(m => m.name), ["미정"])
+        .map(n => "<option>" + esc(n) + "</option>").join("");
+    } catch (e) { API.showError(e); }
+    await load();
+  })();
+</script>
+</body>
+</html>

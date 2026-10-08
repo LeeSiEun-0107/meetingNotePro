@@ -29,6 +29,7 @@ def test_signup_password_is_hashed(client, db_engine):
     with Session(db_engine) as s:
         u = s.query(User).one()
         assert u.password_hash != PW and u.password_hash.startswith("$2")
+        assert u.password_hash.split("$")[2] == "11"  # 비용 11
 
 
 @pytest.mark.parametrize("email", ["user@@example", "nodomain", "a b@example.com", ""])
@@ -160,3 +161,26 @@ def test_account_change_is_not_logged_as_activity(client, team):
     client.put("/api/auth/me", json={"name": "박부장"}, headers=team["park"].h)
     after = client.get("/api/me/activities", headers=team["park"].h).json()
     assert len(after) == len(before)
+
+
+def test_signup_and_login_stay_under_250ms(client):
+    """프로그램정의 Metrics: 가입 · 로그인은 bcrypt 비용 때문에 250ms 이내."""
+    import time
+    t0 = time.perf_counter()
+    client.post("/api/auth/signup", json=_signup_body(email="perf@example.com"))
+    signup_ms = (time.perf_counter() - t0) * 1000
+    t0 = time.perf_counter()
+    client.post("/api/auth/login", json={"email": "perf@example.com", "password": PW})
+    login_ms = (time.perf_counter() - t0) * 1000
+    assert signup_ms < 250 and login_ms < 250, (signup_ms, login_ms)
+
+
+def test_general_api_under_100ms(client):
+    import time
+    who = signup(client, "홍")
+    ms = []
+    for _ in range(20):
+        t0 = time.perf_counter()
+        client.get("/api/auth/me", headers=who.h)
+        ms.append((time.perf_counter() - t0) * 1000)
+    assert sum(ms) / len(ms) < 100, ms

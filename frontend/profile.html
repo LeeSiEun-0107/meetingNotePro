@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 내 정보</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+<script src="api.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <a href="meetings.html" class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+    </a>
+    <nav class="flex items-center gap-1 text-[13px] font-bold ml-2 min-w-0 overflow-x-auto">
+      <a href="meetings.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">회의록</a>
+      <a href="todos.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">할 일</a>
+      <a href="team.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">팀</a>
+      <span class="px-2.5 py-1 rounded-lg bg-page dark:bg-chip">내 정보</span>
+    </nav>
+    <div class="ml-auto" id="themeSlot"></div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5 grid gap-4 lg:grid-cols-[1fr_1.3fr]">
+
+  <!-- 왼쪽: 계정 -->
+  <div class="space-y-4">
+    <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 rounded-2xl bg-page dark:bg-chip border border-line dark:border-edge grid place-items-center text-lg font-extrabold">김</div>
+        <div>
+          <p class="text-[15px] font-extrabold" id="who"></p>
+          <p id="email" class="text-[12px] text-ink-3 dark:text-dim"></p>
+        </div>
+        <span class="ml-auto px-2.5 py-1 rounded-md text-[11px] font-extrabold text-purple-text dark:text-purple-dot bg-page dark:bg-chip">owner</span>
+      </div>
+
+      <label class="block text-xs font-bold mb-1.5">이름</label>
+      <input id="name"
+        class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+      <p id="errName" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+
+      <div class="mt-3.5">
+        <label class="block text-xs font-bold mb-1.5">현재 비밀번호</label>
+        <input id="pwCur" type="password" placeholder="비밀번호를 바꿀 때만"
+          class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition">
+      </div>
+
+      <div class="mt-3.5 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label class="block text-xs font-bold mb-1.5">새 비밀번호</label>
+          <input id="pw1" type="password" placeholder="8자 이상"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1.5">한 번 더</label>
+          <input id="pw2" type="password" placeholder="다시 입력"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition">
+        </div>
+      </div>
+      <p id="errPw" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+
+      <div id="msg" class="hidden mt-3"></div>
+
+      <div class="mt-4 flex gap-2.5">
+        <button id="saveBtn" class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold hover:opacity-90 transition">저장</button>
+        <button id="logoutBtn" class="h-11 px-4 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-sm font-bold hover:border-ink dark:hover:border-dim transition">로그아웃</button>
+      </div>
+    </section>
+
+    <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+      <div class="flex items-baseline gap-2 mb-3">
+        <h2 class="text-sm font-extrabold">내 할 일</h2>
+        <span id="tCount" class="text-[11px] text-ink-3 dark:text-dim"></span>
+        <a href="todos.html" class="ml-auto text-[11px] font-bold text-blue-text dark:text-blue-dot hover:underline">보드로</a>
+      </div>
+      <ul id="todos" class="space-y-2"></ul>
+    </section>
+  </div>
+
+  <!-- 오른쪽: 내 활동 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex items-baseline gap-2 mb-3">
+      <h2 class="text-sm font-extrabold">내 활동</h2>
+      <span class="text-[11px] text-ink-3 dark:text-dim">최근 순</span>
+      <span id="aCount" class="ml-auto text-[11px] text-ink-3 dark:text-dim"></span>
+    </div>
+    <ol id="acts" class="space-y-2.5"></ol>
+    <div id="aEmpty" class="hidden px-4 py-10 text-center">
+      <p class="text-sm font-bold">아직 활동이 없음</p>
+      <p class="text-[12px] text-ink-2 dark:text-dim mt-1">회의록을 올리거나 할 일을 처리하면 여기에 쌓임</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme(() => {});
+
+  const me = await API.requireLogin();
+  $("who").textContent = me.name;
+  $("name").value = me.name;
+  $("email").textContent = me.email;
+  $("who").closest("section").querySelector(".w-12").textContent = (me.name || "?").charAt(0);
+  const badge = $("who").closest("section").querySelector("span.ml-auto");
+  if (me.role) badge.textContent = me.role; else badge.classList.add("hidden");
+
+  const STATUS = { OPEN:"대기", DOING:"진행", DONE:"완료" };
+  const TCOLOR = { OPEN:"orange", DOING:"blue", DONE:"green" };
+  const KCOLOR = { meeting_add:"blue", todo_assign:"orange", todo_done:"green", comment_add:"purple", member_join:"purple" };
+
+  function renderTodos(list) {
+    $("tCount").textContent = list.length + "건";
+    if (!list.length) {
+      $("todos").innerHTML = `<li class="text-[12px] text-ink-3 dark:text-dim">배정된 할 일이 없음</li>`;
+      return;
+    }
+    $("todos").innerHTML = list.map(t => {
+      const c = TCOLOR[t.status] || "blue";
+      return `
+      <li class="rounded-xl bg-page dark:bg-chip border border-line dark:border-edge ${window.STRIPE[c]} px-3.5 py-2.5">
+        <p class="text-[13px] font-bold">${esc(t.what)}</p>
+        <div class="mt-1 flex gap-1.5">
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-surface text-ink-2 dark:text-dim">${esc(t.due_text)}</span>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${window.LABEL[c]} bg-white dark:bg-surface">${esc(STATUS[t.status] || t.status)}</span>
+        </div>
+      </li>`;
+    }).join("");
+  }
+
+  function renderActs(list) {
+    $("acts").innerHTML = list.map(a => `
+      <li class="rounded-xl bg-page dark:bg-chip border border-line dark:border-edge ${window.STRIPE[KCOLOR[a.kind] || "blue"]} px-3.5 py-2.5">
+        <p class="text-[13px]">${esc(a.text)}</p>
+        <p class="text-[11px] text-ink-3 dark:text-dim mt-0.5">${esc(window.fmt.when(a.created_at))}</p>
+      </li>`).join("");
+    $("aCount").textContent = list.length ? list.length + "건" : "";
+    $("acts").classList.toggle("hidden", list.length === 0);
+    $("aEmpty").classList.toggle("hidden", list.length > 0);
+  }
+
+  try { renderTodos(await API.get("/api/me/todos") || []); } catch (e) { API.showError(e); }
+  try { renderActs(await API.get("/api/me/activities") || []); } catch (e) { API.showError(e); }
+
+  const clearErr = () => {
+    ["errName","errPw","msg"].forEach(i => $(i).classList.add("hidden"));
+    [$("name"), $("pwCur"), $("pw1"), $("pw2")].forEach(el => el.classList.remove("border-red-dot"));
+  };
+  const showErr = (id, text, field) => {
+    $(id).textContent = text; $(id).classList.remove("hidden");
+    if (field) field.classList.add("border-red-dot");
+  };
+
+  $("saveBtn").onclick = async () => {
+    clearErr();
+    const name = $("name").value.trim();
+    const cur = $("pwCur").value, pw1 = $("pw1").value, pw2 = $("pw2").value;
+    if (!name) { showErr("errName", "이름을 입력해야 함", $("name")); return; }
+    const changing = pw1 !== "" || pw2 !== "";
+    if (changing) {
+      if (pw1 !== pw2) { showErr("errPw", "두 비밀번호가 다름", $("pw2")); return; }
+      if (pw1.length < 8) { showErr("errPw", "비밀번호는 8자 이상", $("pw1")); return; }
+      if (!cur) { showErr("errPw", "현재 비밀번호를 입력해야 함", $("pwCur")); return; }
+    }
+    const btn = $("saveBtn");
+    btn.disabled = true; btn.textContent = "저장 중...";
+    try {
+      const body = changing ? { name, current_password: cur, password: pw1 } : { name };
+      await API.put("/api/auth/me", body, { keepAuth: true });
+      $("msg").innerHTML = window.notice("green", "저장함", changing ? "비밀번호를 바꿨음" : undefined);
+      $("msg").classList.remove("hidden");
+      $("pwCur").value = ""; $("pw1").value = ""; $("pw2").value = "";
+      $("who").textContent = name;
+      API.forgetMe();
+    } catch (e) {
+      if (e.code === "UNAUTHORIZED") showErr("errPw", "현재 비밀번호가 틀림", $("pwCur"));
+      else if (e.code === "PASSWORD_TOO_WEAK") showErr("errPw", "비밀번호는 8자 이상", $("pw1"));
+      else if (e.code === "VALIDATION_ERROR") {
+        if (/이름/.test(e.msg || "")) showErr("errName", e.msg, $("name")); else showErr("errPw", e.msg, null);
+      } else API.showError(e);
+    } finally {
+      btn.disabled = false; btn.textContent = "저장";
+    }
+  };
+
+  $("logoutBtn").onclick = async () => {
+    try { await API.post("/api/auth/logout", undefined, { quiet: true }); } catch (e) {}
+    API.token.clear();
+    location.href = "/login.html";
+  };
+})();
+</script>
+</body>
+</html>

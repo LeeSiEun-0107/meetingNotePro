@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 회의록 목록</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+<script src="api.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+    </div>
+    <nav class="flex items-center gap-1 text-[13px] font-bold ml-2 min-w-0 overflow-x-auto">
+      <span class="px-2.5 py-1 rounded-lg bg-page dark:bg-chip">회의록</span>
+      <a href="todos.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">할 일</a>
+      <a href="team.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">팀</a>
+      <a href="profile.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">내 정보</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2 shrink-0">
+      <span class="hidden sm:inline text-[12px] text-ink-3 dark:text-dim" id="teamName">기획팀</span>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5">
+
+  <!-- 검색 줄 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-4 mb-4">
+    <div class="flex flex-col sm:flex-row gap-2.5">
+      <input id="q" type="search" placeholder="제목 또는 참석자로 검색"
+        class="flex-1 h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+               text-sm placeholder:text-ink-3 dark:placeholder:text-dim
+               focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+      <div class="flex flex-wrap gap-2.5">
+        <input id="from" type="date"
+          class="h-11 px-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+                 flex-1 min-w-0 basis-[calc(50%-0.3125rem)] sm:basis-auto sm:flex-none
+                 focus:outline-none focus:border-blue-dot transition">
+        <input id="to" type="date"
+          class="h-11 px-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+                 flex-1 min-w-0 basis-[calc(50%-0.3125rem)] sm:basis-auto sm:flex-none
+                 focus:outline-none focus:border-blue-dot transition">
+        <button id="newBtn"
+          class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold
+                 w-full sm:w-auto
+                 hover:opacity-90 active:scale-[.99] transition whitespace-nowrap">새 회의록</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 새 회의록 패널 -->
+  <section id="newPanel" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge
+           border-l-[6px] border-l-blue-dot p-5 mb-4">
+    <h2 class="text-sm font-extrabold mb-3">새 회의록</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="block text-xs font-bold mb-1.5">제목</label>
+        <input id="nTitle" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition" placeholder="2차 스프린트 계획 회의">
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1.5">회의 시각</label>
+        <input id="nAt" type="datetime-local" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold mb-1.5">참석자</label>
+        <input id="nWho" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition" placeholder="김대리, 박과장, 이주임">
+      </div>
+    </div>
+
+    <!-- 녹취 올리기 -->
+    <div id="dropZone" class="mt-3 rounded-xl border-2 border-dashed border-line dark:border-edge px-4 py-6 text-center">
+      <p class="text-[13px] font-bold" id="dropTitle">녹취 파일을 끌어다 놓기</p>
+      <p class="text-[11px] text-ink-3 dark:text-dim mt-1" id="dropSub">mp3 · wav · 25MB 이하. 또는 아래에 메모를 붙여넣기</p>
+      <div id="progWrap" class="hidden mt-3">
+        <div class="h-1.5 rounded-full bg-page dark:bg-chip overflow-hidden">
+          <div id="prog" class="h-full bg-blue-dot transition-all" style="width:0%"></div>
+        </div>
+        <p id="progText" class="mt-1.5 text-[11px] font-bold text-blue-text dark:text-blue-dot"></p>
+      </div>
+    </div>
+    <div id="dropErr" class="hidden mt-2.5"></div>
+
+    <textarea id="nBody" rows="4" placeholder="받아쓴 본문 또는 붙여넣은 메모"
+      class="mt-3 w-full px-3.5 py-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+             focus:outline-none focus:border-blue-dot transition"></textarea>
+
+    <div class="mt-3 flex gap-2.5 justify-end">
+      <button id="cancelBtn" class="h-11 px-4 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-sm font-bold hover:border-ink dark:hover:border-dim transition">취소</button>
+      <button id="saveBtn" class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold hover:opacity-90 transition">정리하기</button>
+    </div>
+    <p class="mt-2.5 text-[11px] text-ink-3 dark:text-dim">저장하면 입력칸은 비워짐. 같은 회의록이 두 번 저장되지 않음</p>
+  </section>
+
+  <!-- 목록 -->
+  <section>
+    <div class="flex items-baseline gap-2 mb-3">
+      <h2 class="text-sm font-extrabold">회의록</h2>
+      <span id="count" class="text-[11px] text-ink-3 dark:text-dim"></span>
+    </div>
+    <div id="list" class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    <div id="empty" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge px-5 py-12 text-center">
+      <p class="text-sm font-bold" id="emptyTitle">아직 회의록이 없음</p>
+      <p class="text-[12px] text-ink-2 dark:text-dim mt-1" id="emptySub">새 회의록 버튼으로 첫 회의를 올려 보기</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme(() => render());
+
+  const $ = (id) => document.getElementById(id);
+  const ESC = {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ESC[c]);
+  const COLORS = ["blue","green","orange","purple","red"];
+  let DATA = [], me = null, filtered = false;
+
+  const card = (m) => `
+    <article data-id="${m.id}" class="rounded-xl bg-white dark:bg-surface border border-line dark:border-edge
+                    ${window.STRIPE[m.color]} p-4 hover:border-ink dark:hover:border-dim transition cursor-pointer">
+      <div class="flex items-start gap-2">
+        <h3 class="text-[14px] font-extrabold leading-snug flex-1">${esc(m.title)}</h3>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${window.LABEL[m.color]} bg-page dark:bg-chip shrink-0">
+          ${m.done}/${m.todo}</span>
+      </div>
+      <p class="mt-1 text-[11px] text-ink-3 dark:text-dim">${esc(m.at)}  ·  ${esc(m.who)}</p>
+      <p class="mt-2 text-[12px] text-ink-2 dark:text-dim leading-relaxed line-clamp-2">${esc(m.sum)}</p>
+      <div class="mt-2.5 flex gap-1.5">
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim">결정 ${m.dec}</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim">할 일 ${m.todo}</span>
+      </div>
+    </article>`;
+
+  function render(){
+    $("list").innerHTML = DATA.map(card).join("");
+    $("count").textContent = DATA.length ? DATA.length + "건" : "";
+    $("empty").classList.toggle("hidden", DATA.length > 0);
+    $("list").classList.toggle("hidden", DATA.length === 0);
+    $("emptyTitle").textContent = filtered ? "검색 결과 없음" : "아직 회의록이 없음";
+    $("emptySub").textContent = filtered ? "검색어를 지우면 전체 목록으로 돌아감" : "새 회의록 버튼으로 첫 회의를 올려 보기";
+  }
+
+  $("list").addEventListener("click", (ev) => {
+    const a = ev.target.closest("article[data-id]");
+    if (a) location.href = "/detail.html?id=" + a.dataset.id;
+  });
+
+  const showErr = (kind, title, body) => {
+    $("dropErr").innerHTML = window.notice(kind, title, body);
+    $("dropErr").classList.remove("hidden");
+  };
+
+  const resetPanel = () => {
+    $("newPanel").classList.add("hidden");
+    $("dropErr").classList.add("hidden");
+    $("dropErr").innerHTML = "";
+    $("progWrap").classList.add("hidden");
+    $("prog").style.width = "0%";
+    ["nTitle","nAt","nWho","nBody"].forEach(i => $(i).value = "");
+    $("dropTitle").textContent = "녹취 파일을 끌어다 놓기";
+    $("dropSub").textContent = "mp3 · wav · 25MB 이하. 또는 아래에 메모를 붙여넣기";
+    $("saveBtn").disabled = false;
+    $("saveBtn").textContent = "정리하기";
+  };
+
+  async function load(){
+    const p = new URLSearchParams();
+    const q = $("q").value.trim();
+    if (q) p.set("q", q);
+    if ($("from").value) p.set("from", $("from").value);
+    if ($("to").value) p.set("to", $("to").value);
+    filtered = p.toString() !== "";
+    try {
+      const rows = await API.get(`/api/teams/${me.team_id}/meetings` + (filtered ? "?" + p : ""));
+      DATA = rows.map((m, i) => ({
+        id: m.id, title: m.title, at: fmt.dt(m.met_at), who: m.attendees || "",
+        sum: m.summary || "", dec: m.decision_count || 0, todo: m.todo_total_count || 0,
+        done: m.todo_done_count || 0, color: COLORS[i % COLORS.length]
+      }));
+      render();
+    } catch (e) { API.showError(e); }
+  }
+
+  let timer = null;
+  $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(load, 300); });
+  $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(timer); load(); } });
+  $("from").addEventListener("change", load);
+  $("to").addEventListener("change", load);
+
+  $("newBtn").onclick = () => $("newPanel").classList.remove("hidden");
+  $("cancelBtn").onclick = () => resetPanel();
+
+  // 녹취 올리기
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = ".mp3,.wav,audio/mpeg,audio/wav";
+  fileInput.className = "hidden";
+  document.body.appendChild(fileInput);
+  const zone = $("dropZone");
+  zone.style.cursor = "pointer";
+  zone.addEventListener("click", () => fileInput.click());
+  zone.addEventListener("dragover", (e) => e.preventDefault());
+  zone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) upload(f);
+  });
+  fileInput.addEventListener("change", () => { if (fileInput.files[0]) upload(fileInput.files[0]); fileInput.value = ""; });
+
+  const mb = (n) => (n / 1048576).toFixed(1) + "MB";
+  let uploading = false;
+
+  async function upload(f){
+    if (uploading) return;
+    $("dropErr").classList.add("hidden");
+    if (f.size > 25 * 1024 * 1024) {
+      showErr("red", "25MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
+      return;
+    }
+    uploading = true;
+    $("dropTitle").textContent = f.name;
+    $("dropSub").textContent = mb(f.size) + "  ·  올리는 중";
+    $("progWrap").classList.remove("hidden");
+    $("prog").style.width = "0%";
+    let pct = 0;
+    $("progText").textContent = "받아쓰는 중  0%";
+    const tick = setInterval(() => {
+      pct = Math.min(90, pct + (90 - pct) * 0.08 + 0.5);
+      $("prog").style.width = pct + "%";
+      $("progText").textContent = "받아쓰는 중  " + Math.round(pct) + "%";
+    }, 400);
+    try {
+      const fd = new FormData();
+      fd.append("file", f);
+      const r = await API.post("/api/upload", fd, {quiet: true});
+      $("prog").style.width = "100%";
+      $("progText").textContent = "받아쓰는 중  100%";
+      $("nBody").value = r.body || "";
+      $("dropSub").textContent = mb(f.size) + "  ·  받아쓰기 완료";
+    } catch (e) {
+      $("progWrap").classList.add("hidden");
+      $("dropTitle").textContent = "녹취 파일을 끌어다 놓기";
+      $("dropSub").textContent = "mp3 · wav · 25MB 이하. 또는 아래에 메모를 붙여넣기";
+      if (e.code === "UNSUPPORTED_MEDIA_TYPE") showErr("red", "mp3 또는 wav 만 올릴 수 있음", "올린 파일 형식을 확인해 주세요");
+      else if (e.code === "PAYLOAD_TOO_LARGE") showErr("red", "25MB 를 넘는 파일", "올린 파일은 " + mb(f.size));
+      else showErr("red", "받아쓰기에 실패함", "메모를 직접 붙여 넣어도 됨");
+    } finally {
+      clearInterval(tick);
+      uploading = false;
+    }
+  }
+
+  $("saveBtn").onclick = async () => {
+    const title = $("nTitle").value.trim(), at = $("nAt").value, body = $("nBody").value.trim();
+    const miss = [];
+    if (!title) miss.push("제목");
+    if (!at) miss.push("회의 시각");
+    if (!body) miss.push("본문");
+    if (miss.length) {
+      showErr("red", "빠진 항목이 있음", miss.join(" · ") + " 을 입력해 주세요");
+      return;
+    }
+    $("dropErr").classList.add("hidden");
+    $("saveBtn").disabled = true;
+    $("saveBtn").textContent = "정리 중...";
+    try {
+      const m = await API.post(`/api/teams/${me.team_id}/meetings`, {
+        title, met_at: fmt.toIso(at), attendees: $("nWho").value.trim(), body
+      });
+      resetPanel();
+      await load();
+      API.toast("green", "저장 완료", "목록 맨 위에 추가됨");
+      if (!m.summary && !m.decision_count && !m.todo_total_count) {
+        setTimeout(() => API.toast("orange", "세 항목 구분 실패", "본문은 저장됨. 요약 · 결정사항 · 할 일은 비어 있음"), 2000);
+      }
+    } catch (e) {
+      $("saveBtn").disabled = false;
+      $("saveBtn").textContent = "정리하기";
+      API.showError(e);
+    }
+  };
+
+  (async () => {
+    me = await API.requireTeam();
+    $("teamName").textContent = me.team_name || "";
+    load();
+  })();
+</script>
+</body>
+</html>

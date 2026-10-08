@@ -12,6 +12,8 @@ MAX_TEAM_MEMBERS = 6
 MAX_COMMENT_LEN = 500
 ACTIVITY_LIMIT = 50
 TOKEN_HOURS = 24
+# bcrypt 비용. 12(기본)는 가입 · 로그인이 250ms 를 넘어 11 로 낮춘다 (권장 하한은 10)
+BCRYPT_ROUNDS = 11
 
 
 def gemini_api_key() -> str:
