@@ -211,8 +211,16 @@ def test_no_new_class_tokens_beyond_the_recorded_exceptions(page):
     assert new == set(), sorted(new)
 
 
-def test_theme_js_is_identical_to_publish():
-    assert (FE / "theme.js").read_bytes() == (PUB / "theme.js").read_bytes()
+def test_theme_js_matches_publish_except_the_font_change():
+    """색 · 클래스 토큰은 publish 와 같다. 사용자 요청으로 바꾼 폰트(줄과 로더)만 다르다."""
+    pub = (PUB / "theme.js").read_text(encoding="utf-8")
+    fe = (FE / "theme.js").read_text(encoding="utf-8")
+    strip_font = lambda s: re.sub(r"^\s*sans: \[.*\]\n", "", s, flags=re.M)
+    strip_loader = lambda s: re.sub(r"// 폰트: Mac 은.*?\}\)\(\);\n\n", "", s, flags=re.S)
+    assert strip_loader(strip_font(fe)) == strip_font(pub)
+    assert "SF Pro" in fe and "Apple SD Gothic Neo" in fe and "Pretendard" in fe
+    sans = re.search(r"sans: \[(.*)\]", fe).group(1)
+    assert sans.index("-apple-system") < sans.index("Apple SD Gothic Neo") < sans.index("Pretendard Variable")
 
 
 @pytest.mark.parametrize("page", PAGES)

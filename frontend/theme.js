@@ -7,7 +7,7 @@ tailwind.config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['-apple-system','BlinkMacSystemFont','Segoe UI','Pretendard','Malgun Gothic','sans-serif']
+        sans: ['-apple-system','BlinkMacSystemFont','SF Pro Text','SF Pro Display','Apple SD Gothic Neo','Pretendard Variable','Pretendard','system-ui','sans-serif']
       },
       colors: {
         page: "#f4f5f6",
@@ -28,6 +28,16 @@ tailwind.config = {
     }
   }
 };
+
+// 폰트: Mac 은 시스템 폰트(San Francisco · Apple SD Gothic Neo)를 그대로 쓴다.
+//   SF 는 라이선스상 웹으로 배포할 수 없고 Windows 에는 없으므로, 그 밖의 기기는 SF 와 닮은
+//   오픈소스 폰트 Pretendard 로 대신한다. 못 불러오면 위 목록의 다음 폰트로 넘어간다
+(function () {
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
+  document.head.appendChild(l);
+})();
 
 // ── 공통 클래스 (문자열 상수) ──────────────────────────────
 // 새 화면을 만들 때 이 값을 그대로 쓴다. 임의 조합 금지

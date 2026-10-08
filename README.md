@@ -90,3 +90,4 @@ REAL_GEMINI=1 REAL_WAV=C:\경로\회의_녹음.wav pytest tests/test_real_audio.
 
 `JWT_SECRET` 이나 `DATABASE_URL` 이 없으면 앱이 일부러 기동을 거부한다 (공개된 기본 비밀키 사용과 읽기 전용 디스크의 SQLite 를 막는 장치).
 Vercel 함수 요청 본문 한도가 4.5MB 라 업로드 상한도 4.5MB 다.
+- **폰트:** 사용자 요청으로 Mac 폰트 스타일을 쓴다. Mac 에서는 시스템 폰트(San Francisco · Apple SD Gothic Neo)를 그대로 쓰고, 그 밖의 기기는 SF 와 닮은 오픈소스 폰트 Pretendard(jsDelivr CDN)로 대신한다. SF 는 라이선스상 웹으로 배포할 수 없다. `frontend/theme.js` 의 폰트 줄과 로더만 `publish/theme.js` 와 다르고, `publish/` 는 고치지 않았다
