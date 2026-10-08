@@ -21,7 +21,7 @@ def sniff_audio(head: bytes) -> str | None:
     return None
 
 
-@router.post("/upload", summary="녹취 파일(mp3 · wav, 25MB 이하)을 받아쓴 본문 텍스트만 돌려준다. 파일은 보관하지 않음")
+@router.post("/upload", summary="녹취 파일(mp3 · wav, 5MB 이하)을 받아쓴 본문 텍스트만 돌려준다. 파일은 보관하지 않음")
 async def upload(file: UploadFile = FormFile(...), user: User = Depends(current_user)):
     data = bytearray()
     while True:
@@ -30,7 +30,7 @@ async def upload(file: UploadFile = FormFile(...), user: User = Depends(current_
             break
         data += chunk
         if len(data) > MAX_UPLOAD_BYTES:
-            raise ApiError("PAYLOAD_TOO_LARGE", "25MB 를 넘는 파일")
+            raise ApiError("PAYLOAD_TOO_LARGE", "5MB 를 넘는 파일")
     mime = sniff_audio(bytes(data[:16]))
     if mime is None:
         raise ApiError("UNSUPPORTED_MEDIA_TYPE", "mp3 또는 wav 만 올릴 수 있음")

@@ -11,7 +11,6 @@ from . import config
 
 BASE = "https://generativelanguage.googleapis.com"
 TIMEOUT = 60.0  # 받아쓰기 60초 이내가 제약
-INLINE_LIMIT = 14 * 1024 * 1024  # 이보다 크면 Files API 로 올린다 (요청 본문 20MB 제한 때문)
 
 
 class AiError(Exception):
@@ -39,49 +38,10 @@ def _generate(parts: list[dict], generation_config: dict | None = None) -> str:
         raise AiError(f"Gemini 호출 실패: {e.__class__.__name__}") from e
 
 
-def _upload_file(data: bytes, mime: str) -> str:
-    """Files API 재개 가능 업로드. file uri 를 돌려준다."""
-    key = config.gemini_api_key()
-    if not key:
-        raise AiError("GEMINI_API_KEY 가 설정되지 않음")
-    try:
-        start = httpx.post(
-            f"{BASE}/upload/v1beta/files",
-            headers={
-                "x-goog-api-key": key,
-                "X-Goog-Upload-Protocol": "resumable",
-                "X-Goog-Upload-Command": "start",
-                "X-Goog-Upload-Header-Content-Length": str(len(data)),
-                "X-Goog-Upload-Header-Content-Type": mime,
-                "Content-Type": "application/json",
-            },
-            json={"file": {"display_name": "meeting-audio"}},
-            timeout=TIMEOUT,
-        )
-        start.raise_for_status()
-        up_url = start.headers["x-goog-upload-url"]
-        done = httpx.post(
-            up_url,
-            headers={
-                "Content-Length": str(len(data)),
-                "X-Goog-Upload-Offset": "0",
-                "X-Goog-Upload-Command": "upload, finalize",
-            },
-            content=data,
-            timeout=TIMEOUT,
-        )
-        done.raise_for_status()
-        return done.json()["file"]["uri"]
-    except (httpx.HTTPError, KeyError, ValueError) as e:
-        raise AiError(f"Gemini 파일 올리기 실패: {e.__class__.__name__}") from e
-
-
 def transcribe(data: bytes, mime: str) -> str:
     """녹취 파일을 받아쓴 본문 텍스트만 돌려준다. 파일은 보관하지 않는다."""
-    if len(data) <= INLINE_LIMIT:
-        media = {"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode("ascii")}}
-    else:
-        media = {"file_data": {"mime_type": mime, "file_uri": _upload_file(data, mime)}}
+    # 상한이 5MB 라 항상 요청 본문에 실어 보낸다 (Gemini 요청 본문 한도 20MB 안)
+    media = {"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode("ascii")}}
     prompt = (
         "이 회의 녹취를 한국어로 받아쓰세요. 들린 말만 그대로 적고 내용을 보태거나 요약하지 마세요. "
         "화자를 구분하지 말고 문장 단위로 줄바꿈하세요. 결과는 받아쓴 본문 텍스트만 출력하세요."

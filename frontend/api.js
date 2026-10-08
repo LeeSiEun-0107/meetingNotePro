@@ -67,6 +67,8 @@
       msg: (data && data.msg) || "서버 오류가 났음",
       status: res.status
     };
+    // 배포 플랫폼이 앱에 닿기 전에 본문 없이 413 으로 거절하는 경우도 같은 안내로 읽는다
+    if (res.status === 413 && !(data && data.code)) { e.code = "PAYLOAD_TOO_LARGE"; e.msg = "5MB 를 넘는 파일"; }
     if (e.code === "TOKEN_EXPIRED") { toLogin(true); throw e; }
     if (e.code === "UNAUTHORIZED" && !opts.keepAuth) { toLogin(false); throw e; }
     if (!opts.quiet && e.status >= 500) showError(e);

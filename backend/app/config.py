@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 
-MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 MAX_TEAM_MEMBERS = 6
 MAX_COMMENT_LEN = 500
 ACTIVITY_LIMIT = 50

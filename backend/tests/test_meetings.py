@@ -185,14 +185,14 @@ def test_upload_judges_by_content_not_extension(client, team):
     assert r.status_code == 415 and r.json()["code"] == "UNSUPPORTED_MEDIA_TYPE"
 
 
-def test_upload_over_25mb_is_413(client, team):
-    big = WAV + b"\x00" * (25 * 1024 * 1024)
+def test_upload_over_5mb_is_413(client, team):
+    big = WAV + b"\x00" * (5 * 1024 * 1024)
     r = _upload(client, team["park"], big)
     assert r.status_code == 413 and r.json()["code"] == "PAYLOAD_TOO_LARGE"
 
 
-def test_upload_exactly_25mb_is_accepted(client, team):
-    data = WAV + b"\x00" * (25 * 1024 * 1024 - len(WAV))
+def test_upload_exactly_5mb_is_accepted(client, team):
+    data = WAV + b"\x00" * (5 * 1024 * 1024 - len(WAV))
     assert _upload(client, team["park"], data).status_code == 200
 
 
