@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 로그인 / 회원가입</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<div class="absolute top-3 right-4 z-40" id="themeSlot"></div>
+
+<main class="flex-1 grid place-items-center px-5 py-10">
+  <div class="w-full max-w-[380px]">
+
+    <div class="flex items-center justify-center gap-2 mb-7">
+      <div class="w-9 h-9 rounded-xl bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold">M</div>
+      <span class="text-xl font-extrabold tracking-tight">MeetingNote</span>
+    </div>
+
+    <div class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-6 sm:p-7">
+      <!-- 세션 만료 - H-01. JWT 24h 경과 후 강제 로그아웃 -->
+      <div id="boxExpired" class="hidden mb-5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+           border-l-[6px] border-l-red-dot dark:border-l-red-dot px-3.5 py-2.5">
+        <p class="text-[13px] font-bold text-red-text dark:text-red-dot">세션 만료</p>
+        <p class="text-[12px] text-ink-2 dark:text-dim mt-0.5">24시간이 지나 다시 로그인 필요</p>
+      </div>
+
+      <h1 id="title" class="text-lg font-extrabold mb-1">로그인</h1>
+      <p id="sub" class="text-[13px] text-ink-2 dark:text-dim mb-6">회의록과 할 일을 팀이 함께 관리</p>
+
+      <div class="space-y-4">
+        <div>
+          <label for="email" class="block text-xs font-bold mb-1.5">이메일</label>
+          <input id="email" type="email" placeholder="user@example.com"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+                   text-sm placeholder:text-ink-3 dark:placeholder:text-dim
+                   focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+          <p id="errEmail" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+        </div>
+
+        <div>
+          <label for="pw" class="block text-xs font-bold mb-1.5">비밀번호</label>
+          <input id="pw" type="password" placeholder="8자 이상"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+                   text-sm placeholder:text-ink-3 dark:placeholder:text-dim
+                   focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+          <p id="errPw" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+        </div>
+
+        <!-- 이름 - 회원가입에서만 표시 -->
+        <div id="nameWrap" class="hidden">
+          <label for="uname" class="block text-xs font-bold mb-1.5">이름</label>
+          <input id="uname" type="text" placeholder="홍길동"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+                   text-sm placeholder:text-ink-3 dark:placeholder:text-dim
+                   focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+          <p id="errName" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+        </div>
+
+        <!-- 초대코드 - 회원가입에서만 표시 -->
+        <div id="inviteWrap" class="hidden">
+          <label for="invite" class="block text-xs font-bold mb-1.5">초대코드  <span class="font-normal text-ink-3 dark:text-dim">(선택)</span></label>
+          <input id="invite" type="text" placeholder="MN-7K2D"
+            class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+                   text-sm font-mono tracking-widest placeholder:text-ink-3 dark:placeholder:text-dim
+                   focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+          <p id="errInvite" class="hidden mt-1.5 text-[11px] font-semibold text-red-text dark:text-red-dot"></p>
+          <p class="mt-1.5 text-[11px] text-ink-3 dark:text-dim">비워 두면 가입 후 팀을 새로 만듦</p>
+        </div>
+
+        <!-- 폼 전체 에러 - 401 등 -->
+        <div id="boxErr" class="hidden rounded-xl bg-page dark:bg-chip border-l-[6px] border-red-dot px-3.5 py-2.5">
+          <p id="boxErrText" class="text-[12px] font-bold text-red-text dark:text-red-dot"></p>
+        </div>
+
+        <!-- 성공 -->
+        <div id="boxOk" class="hidden rounded-xl bg-page dark:bg-chip border-l-[6px] border-green-dot px-3.5 py-2.5">
+          <p id="boxOkText" class="text-[12px] font-bold text-green-text dark:text-green-dot"></p>
+        </div>
+
+        <button id="submit"
+          class="w-full h-11 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold
+                 hover:opacity-90 active:scale-[.99] disabled:opacity-60 transition">로그인</button>
+      </div>
+
+      <p id="switch" class="mt-5 text-center text-[13px] text-ink-2 dark:text-dim"></p>
+    </div>
+    <!-- 퍼블리싱 확인용. 어느 API 가 이 상태를 만드는지 적는 줄이라 실제 구현에는 넣지 않는다 -->
+    <p id="note" class="mt-4 text-center text-[11px] text-ink-3 dark:text-dim"></p>
+  </div>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme();
+
+  const $ = (id) => document.getElementById(id);
+  const email = $("email"), pw = $("pw"), invite = $("invite"), submit = $("submit");
+
+  const reset = () => {
+    ["errEmail","errPw","errInvite","boxErr","boxOk","boxExpired"].forEach(i => $(i).classList.add("hidden"));
+    [email, pw, invite].forEach(el => el.classList.remove("border-red-dot"));
+    submit.disabled = false;
+  };
+  const err = (id, input, msg) => {
+    $(id).textContent = msg; $(id).classList.remove("hidden");
+    if (input) input.classList.add("border-red-dot");
+  };
+  const box = (which, msg) => {
+    $(which === "err" ? "boxErrText" : "boxOkText").textContent = msg;
+    $(which === "err" ? "boxErr" : "boxOk").classList.remove("hidden");
+  };
+
+  // 스토리보드 B-01 ~ B-06 의 상태를 그대로 재현
+  const STATES = {
+    "login": () => {
+      reset();
+      $("title").textContent = "로그인";
+      $("sub").textContent = "회의록과 할 일을 팀이 함께 관리";
+      $("nameWrap").classList.add("hidden"); $("inviteWrap").classList.add("hidden");
+      email.value = ""; pw.value = ""; invite.value = "";
+      submit.textContent = "로그인";
+      $("switch").innerHTML = `계정이 없으신가요? <a href="#" class="font-bold text-blue-text dark:text-blue-dot hover:underline">회원가입</a>`;
+      $("note").textContent = "로그인 후 소속 팀이 없으면 팀 만들기 화면으로 이동";
+    },
+    "login-fail": () => {
+      STATES["login"]();
+      email.value = "user@example.com"; pw.value = "wrongpass1";
+      box("err", "이메일 또는 비밀번호가 올바르지 않음");
+      $("note").textContent = "이메일 존재 여부는 노출하지 않음. INVALID_CREDENTIALS 한 메시지로 통일";
+    },
+    // 스토리보드 H-01 - 24h 만료 토큰으로 API 호출 시 401 > 토큰 삭제 > /login 이동
+    "session-expired": () => {
+      STATES["login"]();
+      $("boxExpired").classList.remove("hidden");
+      email.value = "user@example.com";
+      pw.value = "";
+      $("note").textContent = "401 TOKEN_EXPIRED > localStorage 토큰 삭제 > /login 리다이렉트";
+      pw.focus();
+    },
+    "login-ok": () => {
+      STATES["login"]();
+      email.value = "user@example.com"; pw.value = "correct1234";
+      box("ok", "성공. 이동 중...");
+      $("note").textContent = "200 + JWT (exp 24h) > localStorage 저장 > 소속 팀 검사 후 분기";
+    },
+    "signup": () => {
+      reset();
+      $("title").textContent = "회원가입";
+      $("sub").textContent = "이메일과 비밀번호만 있으면 시작";
+      $("nameWrap").classList.remove("hidden"); $("inviteWrap").classList.remove("hidden");
+      email.value = ""; pw.value = ""; invite.value = "";
+      submit.textContent = "가입하기";
+      $("switch").innerHTML = `이미 계정이 있으신가요? <a href="#" class="font-bold text-blue-text dark:text-blue-dot hover:underline">로그인</a>`;
+      $("note").textContent = "email type 검증 + password 8자 이상 (클라이언트)";
+    },
+    "signup-typing": () => {
+      STATES["signup"]();
+      email.value = "user@example.com"; pw.value = "mypassword"; invite.value = "MN-7K2D";
+      $("note").textContent = "입력 중. 제출 전에는 에러를 띄우지 않음";
+    },
+    "signup-loading": () => {
+      STATES["signup-typing"]();
+      submit.textContent = "처리 중...";
+      submit.disabled = true;
+      $("note").textContent = "내 정보 보내는 중";
+    },
+    "signup-err-format": () => {
+      STATES["signup"]();
+      email.value = "user@@example"; pw.value = "mypassword";
+      err("errEmail", email, "이메일 형식이 올바르지 않음");
+      $("note").textContent = "400 EMAIL_INVALID";
+    },
+    "signup-err-dup": () => {
+      STATES["signup"]();
+      email.value = "user@example.com"; pw.value = "mypassword";
+      box("err", "이미 가입된 이메일");
+      $("note").textContent = "409 EMAIL_DUPLICATED - 서버 검증";
+    },
+    "signup-err-weak": () => {
+      STATES["signup"]();
+      email.value = "user@example.com"; pw.value = "1234";
+      err("errPw", pw, "비밀번호는 8자 이상");
+      $("note").textContent = "400 PASSWORD_TOO_WEAK";
+    },
+    "signup-err-invite": () => {
+      STATES["signup"]();
+      email.value = "user@example.com"; pw.value = "mypassword"; invite.value = "MN-0000";
+      err("errInvite", invite, "없는 초대코드");
+      $("note").textContent = "404 INVITE_NOT_FOUND - 가입은 되고 팀 합류만 실패";
+    }
+  };
+
+  window.stateBar([
+    {key:"login",             label:"로그인"},
+    {key:"login-fail",        label:"로그인 실패"},
+    {key:"session-expired",   label:"세션 만료"},
+    {key:"login-ok",          label:"로그인 성공"},
+    {key:"signup",            label:"회원가입 초기"},
+    {key:"signup-typing",     label:"입력 중"},
+    {key:"signup-loading",    label:"처리 중"},
+    {key:"signup-err-format", label:"에러 - 형식"},
+    {key:"signup-err-dup",    label:"에러 - 중복"},
+    {key:"signup-err-weak",   label:"에러 - 약한 비밀번호"},
+    {key:"signup-err-invite", label:"에러 - 초대코드"}
+  ], (key) => STATES[key]());
+</script>
+</body>
+</html>

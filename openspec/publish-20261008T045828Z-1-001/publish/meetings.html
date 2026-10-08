@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 회의록 목록</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+    </div>
+    <nav class="flex items-center gap-1 text-[13px] font-bold ml-2 min-w-0 overflow-x-auto">
+      <span class="px-2.5 py-1 rounded-lg bg-page dark:bg-chip">회의록</span>
+      <a href="todos.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">할 일</a>
+      <a href="team.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">팀</a>
+      <a href="profile.html" class="px-2.5 py-1 rounded-lg text-ink-2 dark:text-dim hover:bg-page dark:hover:bg-chip transition">내 정보</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2 shrink-0">
+      <span class="hidden sm:inline text-[12px] text-ink-3 dark:text-dim" id="teamName">기획팀</span>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5">
+
+  <!-- 검색 줄 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-4 mb-4">
+    <div class="flex flex-col sm:flex-row gap-2.5">
+      <input id="q" type="search" placeholder="제목 또는 참석자로 검색"
+        class="flex-1 h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge
+               text-sm placeholder:text-ink-3 dark:placeholder:text-dim
+               focus:outline-none focus:border-blue-dot focus:ring-2 focus:ring-blue-dot/25 transition">
+      <div class="flex flex-wrap gap-2.5">
+        <input id="from" type="date"
+          class="h-11 px-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+                 flex-1 min-w-0 basis-[calc(50%-0.3125rem)] sm:basis-auto sm:flex-none
+                 focus:outline-none focus:border-blue-dot transition">
+        <input id="to" type="date"
+          class="h-11 px-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+                 flex-1 min-w-0 basis-[calc(50%-0.3125rem)] sm:basis-auto sm:flex-none
+                 focus:outline-none focus:border-blue-dot transition">
+        <button id="newBtn"
+          class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold
+                 w-full sm:w-auto
+                 hover:opacity-90 active:scale-[.99] transition whitespace-nowrap">새 회의록</button>
+      </div>
+    </div>
+    <p id="qNote" class="mt-2.5 text-[11px] text-ink-3 dark:text-dim"></p>
+  </section>
+
+  <!-- 새 회의록 패널 -->
+  <section id="newPanel" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge
+           border-l-[6px] border-l-blue-dot p-5 mb-4">
+    <h2 class="text-sm font-extrabold mb-3">새 회의록</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="block text-xs font-bold mb-1.5">제목</label>
+        <input id="nTitle" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition" placeholder="2차 스프린트 계획 회의">
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1.5">회의 시각</label>
+        <input id="nAt" type="datetime-local" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold mb-1.5">참석자</label>
+        <input id="nWho" class="w-full h-11 px-3.5 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm focus:outline-none focus:border-blue-dot transition" placeholder="김대리, 박과장, 이주임">
+      </div>
+    </div>
+
+    <!-- 녹취 올리기 -->
+    <div id="dropZone" class="mt-3 rounded-xl border-2 border-dashed border-line dark:border-edge px-4 py-6 text-center">
+      <p class="text-[13px] font-bold" id="dropTitle">녹취 파일을 끌어다 놓기</p>
+      <p class="text-[11px] text-ink-3 dark:text-dim mt-1" id="dropSub">mp3 · wav · 25MB 이하. 또는 아래에 메모를 붙여넣기</p>
+      <div id="progWrap" class="hidden mt-3">
+        <div class="h-1.5 rounded-full bg-page dark:bg-chip overflow-hidden">
+          <div id="prog" class="h-full bg-blue-dot transition-all" style="width:0%"></div>
+        </div>
+        <p id="progText" class="mt-1.5 text-[11px] font-bold text-blue-text dark:text-blue-dot"></p>
+      </div>
+    </div>
+    <div id="dropErr" class="hidden mt-2.5"></div>
+
+    <textarea id="nBody" rows="4" placeholder="받아쓴 본문 또는 붙여넣은 메모"
+      class="mt-3 w-full px-3.5 py-3 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge text-sm
+             focus:outline-none focus:border-blue-dot transition"></textarea>
+
+    <div class="mt-3 flex gap-2.5 justify-end">
+      <button id="cancelBtn" class="h-11 px-4 rounded-xl bg-white dark:bg-chip border border-line dark:border-edge text-sm font-bold hover:border-ink dark:hover:border-dim transition">취소</button>
+      <button id="saveBtn" class="h-11 px-4 rounded-xl bg-ink dark:bg-fg text-white dark:text-canvas text-sm font-bold hover:opacity-90 transition">정리하기</button>
+    </div>
+    <p class="mt-2.5 text-[11px] text-ink-3 dark:text-dim">저장하면 입력칸은 비워짐. 같은 회의록이 두 번 저장되지 않음</p>
+  </section>
+
+  <!-- 목록 -->
+  <section>
+    <div class="flex items-baseline gap-2 mb-3">
+      <h2 class="text-sm font-extrabold">회의록</h2>
+      <span id="count" class="text-[11px] text-ink-3 dark:text-dim"></span>
+    </div>
+    <div id="list" class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    <div id="empty" class="hidden rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge px-5 py-12 text-center">
+      <p class="text-sm font-bold" id="emptyTitle">아직 회의록이 없음</p>
+      <p class="text-[12px] text-ink-2 dark:text-dim mt-1" id="emptySub">새 회의록 버튼으로 첫 회의를 올려 보기</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme(() => render());
+
+  const $ = (id) => document.getElementById(id);
+  let DATA = [], mode = "list";
+
+  const SAMPLE = [
+    {id:3, title:"2차 스프린트 계획 회의", at:"2026-09-24 14:00", who:"김대리, 박과장, 이주임",
+     sum:"검색 범위를 제목과 참석자로 확정하고 업로드 용량을 25MB 로 제한", dec:2, todo:3, done:1, color:"blue"},
+    {id:2, title:"배포 환경 점검", at:"2026-09-18 10:30", who:"박과장, 최선임",
+     sum:"배포는 Vercel, DB 는 Neon 으로 확정. 키는 배포 환경변수로만", dec:3, todo:2, done:2, color:"green"},
+    {id:1, title:"기획 킥오프", at:"2026-09-10 09:00", who:"김대리, 박과장, 이주임, 최선임",
+     sum:"회의록 정리기를 팀 단위로 확장하기로 함. MVP 범위 합의", dec:4, todo:5, done:5, color:"orange"}
+  ];
+
+  const card = (m) => `
+    <article class="rounded-xl bg-white dark:bg-surface border border-line dark:border-edge
+                    ${window.STRIPE[m.color]} p-4 hover:border-ink dark:hover:border-dim transition cursor-pointer">
+      <div class="flex items-start gap-2">
+        <h3 class="text-[14px] font-extrabold leading-snug flex-1">${m.title}</h3>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${window.LABEL[m.color]} bg-page dark:bg-chip shrink-0">
+          ${m.done}/${m.todo}</span>
+      </div>
+      <p class="mt-1 text-[11px] text-ink-3 dark:text-dim">${m.at}  ·  ${m.who}</p>
+      <p class="mt-2 text-[12px] text-ink-2 dark:text-dim leading-relaxed line-clamp-2">${m.sum}</p>
+      <div class="mt-2.5 flex gap-1.5">
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim">결정 ${m.dec}</span>
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim">할 일 ${m.todo}</span>
+      </div>
+    </article>`;
+
+  function render(){
+    $("list").innerHTML = DATA.map(card).join("");
+    $("count").textContent = DATA.length ? DATA.length + "건" : "";
+    $("empty").classList.toggle("hidden", DATA.length > 0);
+    $("list").classList.toggle("hidden", DATA.length === 0);
+  }
+
+  const showErr = (kind, title, body) => {
+    $("dropErr").innerHTML = window.notice(kind, title, body);
+    $("dropErr").classList.remove("hidden");
+  };
+
+  const resetPanel = () => {
+    $("newPanel").classList.add("hidden");
+    $("dropErr").classList.add("hidden");
+    $("progWrap").classList.add("hidden");
+    $("prog").style.width = "0%";
+    ["nTitle","nAt","nWho","nBody"].forEach(i => $(i).value = "");
+    $("dropTitle").textContent = "녹취 파일을 끌어다 놓기";
+    $("dropSub").textContent = "mp3 · wav · 25MB 이하. 또는 아래에 메모를 붙여넣기";
+    $("saveBtn").disabled = false;
+    $("saveBtn").textContent = "정리하기";
+  };
+
+  // 스토리보드 C-01 ~ C-09
+  const STATES = {
+    "list": () => {
+      resetPanel(); DATA = SAMPLE.slice(); render();
+      $("qNote").textContent = "목록에는 body 를 싣지 않음";
+    },
+    "empty": () => {
+      resetPanel(); DATA = []; render();
+      $("emptyTitle").textContent = "아직 회의록이 없음";
+      $("emptySub").textContent = "새 회의록 버튼으로 첫 회의를 올려 보기";
+      $("qNote").textContent = "빈 상태도 화면 설계에 포함. 팀 합류 직후 첫 화면";
+    },
+    "search": () => {
+      resetPanel(); DATA = SAMPLE.filter(m => m.title.includes("배포") || m.who.includes("최선임")); render();
+      $("q").value = "배포";
+      $("qNote").textContent = "제목·참석자만 일치. 본문은 검색 대상 아님";
+    },
+    "search-none": () => {
+      resetPanel(); DATA = []; render();
+      $("q").value = "없는말";
+      $("emptyTitle").textContent = "검색 결과 없음";
+      $("emptySub").textContent = "검색어를 지우면 전체 목록으로 돌아감";
+      $("qNote").textContent = "200 + 빈 배열. 404 가 아님";
+    },
+    "new": () => {
+      STATES["list"](); $("newPanel").classList.remove("hidden");
+      $("qNote").textContent = "입력 전 상태. 제목 · 회의 시각 · 본문이 필수";
+    },
+    "upload": () => {
+      STATES["new"]();
+      $("dropTitle").textContent = "회의_녹음.wav";
+      $("dropSub").textContent = "4.2MB  ·  올리는 중";
+      $("progWrap").classList.remove("hidden");
+      $("prog").style.width = "62%";
+      $("progText").textContent = "받아쓰는 중  62%";
+      $("qNote").textContent = "본문 텍스트만 돌려받음. 저장은 아직";
+    },
+    "upload-done": () => {
+      STATES["new"]();
+      $("nTitle").value = "2차 스프린트 계획 회의";
+      $("nWho").value = "김대리, 박과장, 이주임";
+      $("nBody").value = "김대리: 목록 화면 검색 범위를 제목과 참석자로 하겠습니다.\n박과장: 좋습니다. 업로드 용량은 25MB 로 제한하죠.\n이주임: 받아쓰기 유료 전환은 다음에 다시 보겠습니다.";
+      $("dropTitle").textContent = "회의_녹음.wav";
+      $("dropSub").textContent = "4.2MB  ·  받아쓰기 완료";
+      $("qNote").textContent = "본문이 채워짐. 정리하기를 눌러야 세 항목 구분이 돌아감";
+    },
+    "err-type": () => {
+      STATES["new"]();
+      showErr("red", "mp3 또는 wav 만 올릴 수 있음", "415 UNSUPPORTED_MEDIA_TYPE - 올린 파일은 mp4");
+      $("qNote").textContent = "415 - 확장자가 아니라 내용 형식으로 판정";
+    },
+    "err-size": () => {
+      STATES["new"]();
+      showErr("red", "25MB 를 넘는 파일", "413 PAYLOAD_TOO_LARGE - 올린 파일은 30MB");
+      $("qNote").textContent = "413 - 분할 업로드는 범위 외";
+    },
+    "saving": () => {
+      STATES["upload-done"]();
+      $("saveBtn").disabled = true;
+      $("saveBtn").textContent = "정리 중...";
+      $("qNote").textContent = "저장하며 세 항목 구분까지";
+    },
+    "saved": () => {
+      resetPanel(); DATA = SAMPLE.slice(); render();
+      $("dropErr").innerHTML = "";
+      $("qNote").textContent = "201 후 입력칸은 비워지고 목록 맨 위에 추가. 두 번 저장되지 않음";
+    }
+  };
+
+  $("newBtn").onclick = () => STATES["new"]();
+  $("cancelBtn").onclick = () => STATES["list"]();
+
+  window.stateBar([
+    {key:"list",        label:"목록"},
+    {key:"empty",       label:"빈 상태"},
+    {key:"search",      label:"검색"},
+    {key:"search-none", label:"검색 0건"},
+    {key:"new",         label:"새 회의록"},
+    {key:"upload",      label:"올리는 중"},
+    {key:"upload-done", label:"받아쓰기 완료"},
+    {key:"err-type",    label:"에러 - 형식"},
+    {key:"err-size",    label:"에러 - 용량"},
+    {key:"saving",      label:"정리 중"},
+    {key:"saved",       label:"저장 완료"}
+  ], (key) => STATES[key]());
+</script>
+</body>
+</html>

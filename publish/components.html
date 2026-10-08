@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetingNote Pro - 컴포넌트 규격</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="theme.js"></script>
+</head>
+
+<body class="bg-page dark:bg-canvas text-ink dark:text-fg font-sans antialiased min-h-screen flex flex-col">
+
+<header class="sticky top-0 z-30 bg-white dark:bg-canvas border-b border-line dark:border-edge">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+    <a href="index.html" class="flex items-center gap-2 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-ink dark:bg-fg grid place-items-center text-white dark:text-canvas font-extrabold text-sm">M</div>
+      <span class="font-extrabold tracking-tight">MeetingNote</span>
+      <span class="text-ink-3 dark:text-dim px-1">/</span>
+    </a>
+    <span class="text-sm font-bold">컴포넌트 규격</span>
+    <div class="ml-auto" id="themeSlot"></div>
+  </div>
+</header>
+
+<main class="flex-1 w-full max-w-6xl mx-auto px-4 py-5 space-y-4">
+
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge
+                  border-l-[6px] border-l-purple-dot p-5">
+    <h1 class="text-lg font-extrabold tracking-tight">컴포넌트 규격</h1>
+    <p class="mt-1.5 text-[13px] text-ink-2 dark:text-dim">
+      `theme.js` 의 `window.UI` 에 클래스로 고정. 화면마다 다시 정하지 않고 이름만 가져다 씀
+    </p>
+  </section>
+
+  <!-- 01 팔레트 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">01</span>
+      <h2 class="text-sm font-extrabold">팔레트</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">dot 은 띠와 점, text 는 흰 배경 위 글자</p>
+    </div>
+    <div id="palette" class="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-5"></div>
+    <p class="mt-3 text-[11px] text-ink-3 dark:text-dim">
+      카드 배경은 언제나 무채색. 색은 좌측 6px 띠와 라벨에만 씀. 면적으로 쓰지 않음
+    </p>
+  </section>
+
+  <!-- 02 버튼 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">02</span>
+      <h2 class="text-sm font-extrabold">버튼</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">높이 44px 고정 (h-11)</p>
+    </div>
+    <div class="flex flex-wrap gap-2.5">
+      <button id="b1">기본</button>
+      <button id="b2">보조</button>
+      <button id="b3">삭제</button>
+      <button id="b4" disabled>비활성</button>
+    </div>
+    <pre class="mt-3 text-[11px] font-mono text-ink-2 dark:text-dim whitespace-pre-wrap">window.UI.btnPrimary  /  window.UI.btnGhost  /  window.UI.btnDanger</pre>
+  </section>
+
+  <!-- 03 입력 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">03</span>
+      <h2 class="text-sm font-extrabold">입력</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">기본 · 포커스 · 오류 세 상태</p>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div>
+        <label id="l1">이메일</label>
+        <input id="i1" placeholder="user@example.com">
+        <p id="h1">가입에 쓴 주소</p>
+      </div>
+      <div>
+        <label id="l2">제목</label>
+        <input id="i2" value="2차 스프린트 계획 회의">
+      </div>
+      <div>
+        <label id="l3">초대코드</label>
+        <input id="i3" value="MN-0000" class="border-red-dot">
+        <p id="e3">없는 초대코드</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 배지 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">04</span>
+      <h2 class="text-sm font-extrabold">배지</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">할 일 상태 3종 + 권한 2종</p>
+    </div>
+    <div id="badges" class="flex flex-wrap gap-2"></div>
+  </section>
+
+  <!-- 05 알림 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">05</span>
+      <h2 class="text-sm font-extrabold">알림</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">`window.notice(kind, title, body)`</p>
+    </div>
+    <div id="notices" class="grid gap-2.5 sm:grid-cols-2"></div>
+  </section>
+
+  <!-- 06 카드 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">06</span>
+      <h2 class="text-sm font-extrabold">카드</h2>
+      <p class="text-[11px] text-ink-3 dark:text-dim">회의록 카드 · 할 일 카드 · 멤버 카드</p>
+    </div>
+    <div class="grid gap-2.5 sm:grid-cols-3">
+      <article class="rounded-xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-blue-dot p-4">
+        <h3 class="text-[14px] font-extrabold leading-snug">2차 스프린트 계획 회의</h3>
+        <p class="mt-1 text-[11px] text-ink-3 dark:text-dim">2026-09-24 14:00 · 김대리 외 2</p>
+        <p class="mt-2 text-[12px] text-ink-2 dark:text-dim leading-relaxed">검색 범위를 제목과 참석자로 확정</p>
+      </article>
+      <article class="rounded-xl bg-white dark:bg-surface border border-line dark:border-edge border-l-[6px] border-l-red-dot p-4">
+        <p class="text-[13px] font-bold leading-snug">Neon 연결 정보 정리</p>
+        <p class="mt-1 text-[11px] text-ink-3 dark:text-dim">배포 환경 점검</p>
+        <div class="mt-2 flex gap-1.5">
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-ink-2 dark:text-dim">박과장</span>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-page dark:bg-chip text-red-text dark:text-red-dot">어제</span>
+        </div>
+      </article>
+      <article class="rounded-xl bg-white dark:bg-surface border border-line dark:border-edge p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-page dark:bg-chip border border-line dark:border-edge grid place-items-center text-[13px] font-extrabold">김</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] font-bold">김대리</p>
+          <p class="text-[11px] text-ink-3 dark:text-dim truncate">kim@example.com</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 07 규칙 -->
+  <section class="rounded-2xl bg-white dark:bg-surface border border-line dark:border-edge p-5">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-3">
+      <span class="font-mono text-[11px] font-bold text-ink-3 dark:text-dim">07</span>
+      <h2 class="text-sm font-extrabold">지킬 것</h2>
+    </div>
+    <ul class="grid gap-1.5 text-[12px] text-ink-2 dark:text-dim">
+      <li>- 색은 좌측 6px 띠와 라벨에만. 카드 배경을 물들이지 않음</li>
+      <li>- 버튼 높이는 44px 하나. 화면마다 다른 크기를 만들지 않음</li>
+      <li>- 모서리는 카드 `rounded-xl`, 패널 `rounded-2xl` 두 가지만</li>
+      <li>- 새 색을 추가하려면 `theme.js` 팔레트에 먼저 등록</li>
+      <li>- `!important` 금지 (05-conventions 금지 5개 중 하나)</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+  document.getElementById("themeSlot").innerHTML = window.THEME_BTN;
+  window.initTheme();
+
+  const $ = (id) => document.getElementById(id);
+
+  // 버튼
+  $("b1").className = window.UI.btnPrimary;
+  $("b2").className = window.UI.btnGhost;
+  $("b3").className = window.UI.btnDanger;
+  $("b4").className = window.UI.btnPrimary;
+
+  // 입력
+  ["l1","l2","l3"].forEach(i => $(i).className = window.UI.label);
+  ["i1","i2"].forEach(i => $(i).className = window.UI.input);
+  $("i3").className = window.UI.input + " border-red-dot";
+  $("h1").className = window.UI.help;
+  $("e3").className = window.UI.errText;
+
+  // 팔레트
+  const COLORS = [
+    {name:"blue",   use:"요약 · 진행 중"},
+    {name:"green",  use:"결정사항 · 완료"},
+    {name:"orange", use:"할 일 · 대기"},
+    {name:"red",    use:"오류 · 기한 지남"},
+    {name:"purple", use:"팀 · 활동 기록"}
+  ];
+  $("palette").innerHTML = COLORS.map(c => `
+    <div class="rounded-xl bg-page dark:bg-chip border border-line dark:border-edge ${window.STRIPE[c.name]} p-3">
+      <p class="text-[13px] font-extrabold ${window.LABEL[c.name]}">${c.name}</p>
+      <p class="text-[11px] text-ink-3 dark:text-dim mt-0.5">${c.use}</p>
+    </div>`).join("");
+
+  // 배지
+  const BADGES = [
+    {t:"대기",   c:"orange"}, {t:"진행", c:"blue"}, {t:"완료", c:"green"},
+    {t:"owner",  c:"purple"}, {t:"member", c:"blue"}
+  ];
+  $("badges").innerHTML = BADGES.map(b => `
+    <span class="${window.UI.badge} ${window.LABEL[b.c]} bg-page dark:bg-chip">${b.t}</span>`).join("");
+
+  // 알림
+  $("notices").innerHTML = [
+    window.notice("green",  "저장 완료", "목록 맨 위에 추가됨"),
+    window.notice("red",    "25MB 를 넘는 파일", "413 PAYLOAD_TOO_LARGE"),
+    window.notice("orange", "초대코드를 다시 발급함", "앞의 코드는 더 쓸 수 없음"),
+    window.notice("blue",   "받아쓰는 중", "1분 40초 파일 기준 12초 남짓")
+  ].join("");
+</script>
+</body>
+</html>
