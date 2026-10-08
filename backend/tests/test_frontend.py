@@ -249,3 +249,16 @@ def test_inline_scripts_have_valid_syntax(page, tmp_path):
     f.write_text("\n".join(scripts), encoding="utf-8")
     r = subprocess.run(["node", "--check", str(f)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+def test_todos_drag_listens_on_document_and_never_rerenders_while_dragging():
+    """드래그 중 보드를 다시 그리면 눌러 둔 카드가 사라져 이동 · 놓기 이벤트가 끊긴다 (카드에 붙이면 놓아도 아무 일도 안 일어남)."""
+    src = _read("todos")
+    assert "setPointerCapture" not in src
+    assert 'document.addEventListener("pointermove"' in src
+    assert 'document.addEventListener("pointerup"' in src
+    assert 'document.addEventListener("pointercancel"' in src
+    move = src[src.index('document.addEventListener("pointermove"'):src.index('document.addEventListener("pointerup"')]
+    assert "render()" not in move  # 드래그 중에는 클래스만 바꾼다
+    hot = src[src.index("function setHot"):src.index("function endDrag")]
+    assert "render()" not in hot

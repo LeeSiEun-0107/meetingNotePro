@@ -113,3 +113,13 @@ def test_no_api_key_like_string_in_tracked_source():
     bad = [f for f in files if f.endswith((".py", ".js", ".html", ".md", ".yaml", ".json", ".toml", ".example"))
            and pat.search((ROOT / f).read_text(encoding="utf-8", errors="ignore"))]
     assert bad == []
+
+
+def test_static_pages_are_revalidated_so_edits_show_up_without_a_hard_refresh(client):
+    """Cache-Control 이 없으면 브라우저가 고치기 전 화면 파일을 한동안 그대로 실행한다."""
+    for path in ("/login.html", "/todos.html", "/api.js", "/theme.js"):
+        r = client.get(path)
+        assert r.status_code == 200 and r.headers["cache-control"] == "no-cache", path
+    etag = client.get("/todos.html").headers["etag"]
+    assert client.get("/todos.html", headers={"If-None-Match": etag}).status_code == 304  # 그대로면 가볍게 끝난다
+    assert "cache-control" not in client.get("/api/auth/me").headers or "no-cache" not in client.get("/api/auth/me").headers.get("cache-control", "")

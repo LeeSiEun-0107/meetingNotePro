@@ -119,7 +119,6 @@
       (mine ? "bg-white dark:bg-surface shadow-sm" : "text-ink-2 dark:text-dim");
     $("tabAll").className = "px-3 py-1.5 rounded-lg text-[13px] font-bold transition " +
       (!mine ? "bg-white dark:bg-surface shadow-sm" : "text-ink-2 dark:text-dim");
-    bindDrag();
     bindBadge();
   }
 
@@ -179,7 +178,11 @@
   // 끌어 옮기기 - 포인터 이벤트 한 벌로 마우스 · 터치 · 펜을 모두 받는다
   //   HTML5 네이티브 드래그(draggable + dragstart)는 터치에서 이벤트가 뜨지 않아
   //   휴대폰에서 카드가 움직이지 않았다. pointer 계열은 입력 장치를 가리지 않는다
-  let ghost = null, startX = 0, startY = 0, moved = false;
+  //
+  //   주의: 드래그 중에는 보드를 다시 그리지 않는다. 다시 그리면 눌러 둔 카드 요소가 DOM 에서
+  //   사라져 이후 이동 · 놓기 이벤트가 끊긴다. 점선 칸과 흐린 카드는 클래스만 바꿔 보여 준다.
+  //   이동 · 놓기는 카드가 아니라 문서에서 받는다
+  let ghost = null, startX = 0, startY = 0, moved = false, dragEl = null;
 
   function colUnder(x, y){
     const el = document.elementFromPoint(x, y);
@@ -187,52 +190,73 @@
     return z ? z.dataset.col : null;
   }
 
-  function bindDrag(){
-    document.querySelectorAll(".card").forEach(el => {
-      el.addEventListener("pointerdown", (e) => {
-        if (e.target.closest("[data-act]")) return;   // 배지는 누르는 것이지 끄는 것이 아님
-        if (e.button !== undefined && e.button !== 0) return;
-        dragId = +el.dataset.id;
-        startX = e.clientX; startY = e.clientY; moved = false;
-        el.setPointerCapture(e.pointerId);
-      });
-      el.addEventListener("pointermove", (e) => {
-        if (dragId === null) return;
-        if (!moved) {
-          if (Math.abs(e.clientX - startX) < 6 && Math.abs(e.clientY - startY) < 6) return;
-          moved = true;
-          const r = el.getBoundingClientRect();
-          ghost = el.cloneNode(true);
-          ghost.classList.add("fixed", "pointer-events-none", "z-50", "opacity-80", "shadow-lg");
-          ghost.style.width = r.width + "px";
-          document.body.appendChild(ghost);
-          render();
-        }
-        e.preventDefault();
-        ghost.style.left = (e.clientX - 40) + "px";
-        ghost.style.top = (e.clientY - 18) + "px";
-        const c = colUnder(e.clientX, e.clientY);
-        if (c !== overCol) { overCol = c; render(); }
-      });
-      const finish = (e) => {
-        if (dragId === null) return;
-        if (ghost) { ghost.remove(); ghost = null; }
-        const id = dragId;
-        const col = moved ? colUnder(e.clientX, e.clientY) : null;
-        const wasTap = !moved;
-        const t = DATA.find(x => x.id === id);
-        if (t && col && t.status !== col) {
-          moveTo(t, col);
-        }
-        dragId = null; overCol = null; moved = false;
-        render();
-        // 끌지 않고 눌렀으면 옮길 칸을 고르는 메뉴를 연다 (휴대폰에서 유일한 길)
-        if (wasTap && t) openPicker(id);
-      };
-      el.addEventListener("pointerup", finish);
-      el.addEventListener("pointercancel", finish);
+  // 놓을 칸을 점선으로 표시한다 (render 와 같은 클래스 조합)
+  function setHot(colKey){
+    if (colKey === overCol) return;
+    overCol = colKey;
+    document.querySelectorAll("section[data-col]").forEach(sec => {
+      const c = COLS.find(x => x.key === sec.dataset.col);
+      const hot = sec.dataset.col === colKey;
+      ["border-dashed", "border-2", "border-" + c.color + "-dot"].forEach(k => sec.classList.toggle(k, hot));
+      ["border-line", "dark:border-edge"].forEach(k => sec.classList.toggle(k, !hot));
+      const head = sec.querySelector("div");
+      const tag = sec.querySelector("[data-hot]");
+      if (hot && !tag) {
+        const span = document.createElement("span");
+        span.setAttribute("data-hot", "");
+        span.className = "ml-auto text-[10px] font-extrabold " + window.LABEL[c.color];
+        span.textContent = "여기에 놓기";
+        head.appendChild(span);
+      } else if (!hot && tag) {
+        tag.remove();
+      }
     });
   }
+
+  function endDrag(e, cancelled){
+    if (dragId === null) return;
+    if (ghost) { ghost.remove(); ghost = null; }
+    const id = dragId;
+    const col = (moved && !cancelled) ? colUnder(e.clientX, e.clientY) : null;
+    const wasTap = !moved && !cancelled;
+    const t = DATA.find(x => x.id === id);
+    dragId = null; overCol = null; moved = false; dragEl = null;
+    if (t && col && t.status !== col) moveTo(t, col);   // 놓는 순간 한 번만 서버를 부른다
+    else render();
+    // 끌지 않고 눌렀으면 옮길 칸을 고르는 메뉴를 연다 (휴대폰에서 유일한 길)
+    if (wasTap && t) openPicker(id);
+  }
+
+  $("board").addEventListener("pointerdown", (e) => {
+    const el = e.target.closest(".card");
+    if (!el || e.target.closest("[data-act]")) return;   // 배지는 누르는 것이지 끄는 것이 아님
+    if (e.target.closest("#picker")) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    dragId = +el.dataset.id;
+    dragEl = el;
+    startX = e.clientX; startY = e.clientY; moved = false;
+  });
+
+  document.addEventListener("pointermove", (e) => {
+    if (dragId === null || !dragEl) return;
+    if (!moved) {
+      if (Math.abs(e.clientX - startX) < 6 && Math.abs(e.clientY - startY) < 6) return;
+      moved = true;
+      closePicker();
+      const r = dragEl.getBoundingClientRect();
+      ghost = dragEl.cloneNode(true);
+      ghost.classList.add("fixed", "pointer-events-none", "z-50", "opacity-80", "shadow-lg");
+      ghost.style.width = r.width + "px";
+      document.body.appendChild(ghost);
+      dragEl.classList.add("opacity-40");
+    }
+    e.preventDefault();
+    ghost.style.left = (e.clientX - 40) + "px";
+    ghost.style.top = (e.clientY - 18) + "px";
+    setHot(colUnder(e.clientX, e.clientY));
+  });
+  document.addEventListener("pointerup", (e) => endDrag(e, false));
+  document.addEventListener("pointercancel", (e) => endDrag(e, true));
 
   function moveTo(t, col){
     const label = COLS.find(c => c.key === col).label;
