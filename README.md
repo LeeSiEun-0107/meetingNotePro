@@ -1,7 +1,7 @@
 # MeetingNote Pro
 
 팀이 함께 쓰는 회의록. 녹취를 받아쓴 본문을 요약 · 결정사항 · 할 일로 나누고, 할 일은 칸반으로 추적한다.
-설계 문서는 `docs/`, 확정 디자인은 `publish/`, 구현 명세는 `openspec/changes/meetingnote-pro-mvp/` 에 있다.
+설계 문서는 `docs/`, 확정 디자인은 `publish/`, 구현 명세는 `openspec/changes/add-mvp-core/` 에 있다.
 
 ## 폴더
 
