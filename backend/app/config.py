@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 
-MAX_UPLOAD_BYTES = int(4.5 * 1024 * 1024)  # Vercel 함수 요청 본문 한도(약 4.5MB)에 맞춤
+# Vercel 함수 본문 한도는 헤더 포함 4.5MB(십진). 실측으로 파일 약 4,493,750바이트까지 받는다.
+# 헤더 여유를 두고 4.4MB 로 잡아 한도에 닿기 전에 항상 앱이 {code, msg} 로 안내하게 한다
+MAX_UPLOAD_BYTES = 4_400_000
 MAX_TEAM_MEMBERS = 6
 MAX_COMMENT_LEN = 500
 ACTIVITY_LIMIT = 50

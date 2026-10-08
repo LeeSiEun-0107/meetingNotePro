@@ -40,7 +40,7 @@ def _generate(parts: list[dict], generation_config: dict | None = None) -> str:
 
 def transcribe(data: bytes, mime: str) -> str:
     """녹취 파일을 받아쓴 본문 텍스트만 돌려준다. 파일은 보관하지 않는다."""
-    # 상한이 4.5MB 라 항상 요청 본문에 실어 보낸다 (Gemini 요청 본문 한도 20MB 안)
+    # 상한이 4.4MB 라 항상 요청 본문에 실어 보낸다 (Gemini 요청 본문 한도 20MB 안)
     media = {"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode("ascii")}}
     prompt = (
         "이 회의 녹취를 한국어로 받아쓰세요. 들린 말만 그대로 적고 내용을 보태거나 요약하지 마세요. "

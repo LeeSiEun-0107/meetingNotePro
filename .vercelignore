@@ -13,3 +13,5 @@ openspec/
 *.zip
 TODO.md
 TODO-완료.md
+.env.*
+.vercel/

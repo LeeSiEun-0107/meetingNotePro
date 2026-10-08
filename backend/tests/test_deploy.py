@@ -73,5 +73,7 @@ def test_vercel_without_database_url_refuses_sqlite(monkeypatch):
     assert config.database_url().startswith("postgresql+psycopg://")
 
 
-def test_upload_limit_is_4_5mb_to_fit_vercel_function_body():
-    assert config.MAX_UPLOAD_BYTES == int(4.5 * 1024 * 1024)
+def test_upload_limit_leaves_headroom_under_vercel_function_body_limit():
+    # Vercel 은 헤더 포함 본문 4,500,000바이트까지. 실측으로 파일 4,493,750바이트까지 통과한다
+    assert config.MAX_UPLOAD_BYTES == 4_400_000
+    assert config.MAX_UPLOAD_BYTES < 4_493_750
