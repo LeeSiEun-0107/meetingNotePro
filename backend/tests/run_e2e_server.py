@@ -10,7 +10,8 @@ from pathlib import Path
 
 db = sys.argv[1] if len(sys.argv) > 1 else str(Path.home() / "mnp-e2e.db")
 port = int(sys.argv[2]) if len(sys.argv) > 2 else 8000
-Path(db).unlink(missing_ok=True)
+if os.environ.get("KEEP_DB") != "1":
+    Path(db).unlink(missing_ok=True)
 os.environ["DATABASE_URL"] = "sqlite:///" + db.replace("\\", "/")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

@@ -43,15 +43,28 @@ cp ../.env.example ../.env                                        # 그리고 GE
 
 ```bash
 cd backend
-.venv/Scripts/python -m pytest
+.venv/Scripts/python -m pytest                                       # 전체 (1단계 + 2단계)
+.venv/Scripts/python -m pytest tests --ignore=tests/stage2_integration   # 1단계만
+.venv/Scripts/python -m pytest tests/stage2_integration                  # 2단계만
 ```
 
-Gemini 는 부르지 않고 가짜로 바꿔 돌린다. 프런트 규칙 검사와 `isLate` 검사에는 `node` 가 필요하다 (없으면 건너뛴다).
+| 단계 | 무엇을 | 어떻게 |
+|---|---|---|
+| 1단계 | API 26개, 권한, 오류 코드, 문서 규칙, 프런트 규칙(클래스 보존 · 매핑표 대조) | 메모리 DB, Gemini 는 가짜 |
+| 2단계 | 사용 시나리오 4종, 권한, 정원 6명, 동시 50명, 성능 기준(API 100ms · 가입/로그인 250ms), 서버 재시작 뒤 데이터 유지 | 실제 uvicorn 프로세스 + 파일 DB + HTTP |
+
+프런트 규칙 검사와 `isLate` 검사에는 `node` 가 필요하다 (없으면 건너뛴다).
+
+**실제 Gemini 로 돌리기** (키와 비용이 들어서 기본은 건너뛴다):
+
+```bash
+REAL_GEMINI=1 REAL_WAV=C:\경로\회의_녹음.wav pytest tests/test_real_audio.py tests/stage2_integration/test_real_gemini.py
+```
 
 키 없이 브라우저로 화면 흐름을 보려면 Gemini 만 가짜로 바꾼 서버를 쓴다.
 
 ```bash
-.venv/Scripts/python tests/run_e2e_server.py <임시 DB 경로> 8765     # 8000 이 비어 있으면 포트 생략 가능
+.venv/Scripts/python tests/run_e2e_server.py <임시 DB 경로> 8765
 ```
 
 ## 알려둘 것
