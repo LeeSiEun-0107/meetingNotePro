@@ -28,12 +28,12 @@
 ## Capabilities
 
 ### New Capabilities
-- `user-auth`: 회원가입 · 로그인 · JWT(24h) · 내 정보 조회와 수정 · 로그아웃
+- `auth`: 회원가입 · 로그인 · JWT(24h) · 내 정보 조회와 수정 · 로그아웃
 - `team`: 팀 생성 · 목록 · 초대코드 발급과 재발급 · 합류 · 멤버 목록 · 팀 이름 변경(owner)
-- `meeting-notes`: 녹취 업로드와 받아쓰기 · 세 항목 구분 · 회의록 CRUD · 검색(제목 · 참석자 · 기간)
-- `todo-board`: 대기 · 진행 · 완료 3열 칸반 · 상태 변경 · 담당자 배정 · 기한 지남 표시 · 삭제(owner)
-- `meeting-comments`: 회의록 댓글 작성 · 목록 · 삭제(쓴 사람과 owner)
-- `activity-log`: 팀 활동 · 내 활동 (kind 5종)
+- `meeting`: 녹취 업로드와 받아쓰기 · 세 항목 구분 · 회의록 CRUD · 검색(제목 · 참석자 · 기간)
+- `todo`: 대기 · 진행 · 완료 3열 칸반 · 상태 변경 · 담당자 배정 · 기한 지남 표시 · 삭제(owner)
+- `comment`: 회의록 댓글 작성 · 목록 · 삭제(쓴 사람과 owner)
+- `activity`: 팀 활동 · 내 활동 (kind 5종)
 
 ### Modified Capabilities
 
