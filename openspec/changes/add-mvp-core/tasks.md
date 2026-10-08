@@ -59,7 +59,7 @@
 ## 9. 배포
 
 - [x] 9.1 Vercel 설정을 만든다: 루트 `pyproject.toml`(`[tool.vercel] entrypoint`), `vercel.json`(maxDuration 60), `.vercelignore`, 배포 환경에서 `JWT_SECRET` · `DATABASE_URL` 이 없으면 기동을 거부하는 안전장치. 설정 파일 · 엔트리포인트 import · 안전장치를 pytest 로 확인하고, 키가 저장소에 없는지 `git grep` 으로 확인한다
-- [ ] 9.2 Neon 에 연결해 배포하고 로그인 · 팀 합류 · 4MB 대 wav 업로드 · 칸반 이동이 `<프로젝트>.vercel.app` 에서 되는지 확인한다. 배포 5분 이내 · 신규 합류 1분 안에 맥락 파악도 함께 본다 (보류: 사용자가 Vercel 배포를 미룸)
+- [x] 9.2 Neon 에 연결해 배포하고 로그인 · 팀 합류 · 4MB 대 wav 업로드 · 칸반 이동이 `<프로젝트>.vercel.app` 에서 되는지 확인한다. 배포 5분 이내 · 신규 합류 1분 안에 맥락 파악도 함께 본다 (운영 https://meetingnotepro-nu.vercel.app 에서 가입 · 팀 만들기 · 합류 · 4.19MB wav 받아쓰기 · 회의록 저장 · 칸반 이동 · 댓글 · 권한을 확인함. Neon 에 7개 테이블 생성)
 
 ## 10. 통합 확인
 

@@ -72,22 +72,26 @@ REAL_GEMINI=1 REAL_WAV=C:\경로\회의_녹음.wav pytest tests/test_real_audio.
 - 업로드(`/api/upload`)는 로컬에서 서버가 파일을 직접 받는다. 배포(Vercel)의 Blob 직접 업로드는 아직 구현 전이다 (`tasks.md` 4.1 · 4.6)
 - Gemini 는 실제 키로 확인했다 (100초 wav 4.19MB 받아쓰기 약 5초, 같은 내용의 mp3 약 4초, 세 항목 구분). 업로드 상한은 4.4MB 다. 자동 테스트는 Gemini 를 가짜로 대체하고, 실제 호출 테스트는 `REAL_GEMINI=1` 일 때만 돈다
 
-## Vercel 배포
+## Vercel 배포 (완료)
 
-설정 파일은 준비되어 있다 (`pyproject.toml` 의 `[tool.vercel]`, `vercel.json`, `.vercelignore`). 계정이 필요한 단계는 직접 한다.
+- **운영 주소: https://meetingnotepro-nu.vercel.app** (화면 `/`, API 문서 `/docs`)
+- Vercel 프로젝트 `meetingnotepro`(팀 `leesieuns-projects`, hobby), DB 는 Neon Postgres `meetingnotepro-db`(Vercel 연동)
+- 환경변수(운영 · 미리보기): `DATABASE_URL` 등 Neon 이 넣은 것, `GEMINI_API_KEY`, `GEMINI_MODEL`, `JWT_SECRET`. 키 값은 저장소에 없다
 
-1. Vercel 에서 이 저장소(GitHub)를 가져온다. Framework 는 FastAPI(자동 감지)
-2. **Storage 에서 Neon Postgres 를 연결한다.** `DATABASE_URL` 이 자동으로 들어간다
-3. Environment Variables 에 넣는다 (모두 Production):
+**다시 배포하기** (코드를 고친 뒤):
 
-| 이름 | 값 |
-|---|---|
-| `GEMINI_API_KEY` | Gemini 키 |
-| `GEMINI_MODEL` | `gemini-3.1-flash-lite` |
-| `JWT_SECRET` | 길고 무작위인 문자열 (예: `python -c "import secrets; print(secrets.token_urlsafe(48))"`) |
+```bash
+vercel deploy --prod --yes          # 프로젝트 루트에서. Vercel CLI 로그인이 되어 있어야 한다
+```
 
-4. 배포 후 `https://<프로젝트>.vercel.app/` 에서 가입 · 팀 만들기 · 회의록 저장을 해 보고, `/docs` 로 API 를 호출해 본다
+**DB 테이블 만들기(마이그레이션)** — 새 DB 를 연결했을 때 한 번:
 
-`JWT_SECRET` 이나 `DATABASE_URL` 이 없으면 앱이 일부러 기동을 거부한다 (공개된 기본 비밀키 사용과 읽기 전용 디스크의 SQLite 를 막는 장치).
-Vercel 함수 요청 본문 한도가 헤더 포함 4.5MB 라(실측: 파일 약 4,493,750바이트), 업로드 상한은 여유를 두고 4.4MB 다.
-- **폰트:** 사용자 요청으로 Mac 폰트 스타일을 쓴다. Mac 에서는 시스템 폰트(San Francisco · Apple SD Gothic Neo)를 그대로 쓰고, 그 밖의 기기는 SF 와 닮은 오픈소스 폰트 Pretendard(jsDelivr CDN)로 대신한다. SF 는 라이선스상 웹으로 배포할 수 없다. `frontend/theme.js` 의 폰트 줄과 로더만 `publish/theme.js` 와 다르고, `publish/` 는 고치지 않았다
+```bash
+vercel env pull .env.prod --environment production      # 값은 커밋하지 않는다
+cd backend && DATABASE_URL=... python -m app.migrate     # 없는 테이블만 만들고 데이터는 건드리지 않는다
+```
+
+참고
+- `JWT_SECRET` 이나 `DATABASE_URL` 이 없으면 앱이 일부러 기동을 거부한다 (공개된 기본 비밀키 사용과 읽기 전용 디스크의 SQLite 를 막는 장치)
+- Vercel 함수 요청 본문 한도가 헤더 포함 4.5MB 라(실측: 파일 약 4,493,750바이트), 업로드 상한은 여유를 두고 4.4MB 다
+- 이 저장소를 GitHub 와 연결해 push 마다 자동 배포하려면 Vercel 에 GitHub 앱 설치가 필요하다 (지금은 CLI 로 배포)
